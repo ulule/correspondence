@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block body_class %}conversations{% endblock %}
+
+{% block main %}
+    <div id="conversations-container">
+    </div>
+{% endblock %}
+
+{% block scripts %}
+    <script type="text/javascript">
+        window.CDE = {
+            api: {
+                url: "/api",
+            },
+            authenticatedUser: {{ authenticated_user.model_dump_json()|safe }},
+            organization: {{ organization.model_dump_json()|safe }},
+            countries: {{ COUNTRIES|jsonify|safe }}
+        }
+    </script>
+    <script type="text/javascript" src="/static/build/js/app.js"></script>
+{% endblock %}

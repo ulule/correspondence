@@ -1,16 +1,20 @@
 import logging
+import pathlib
 import sys
+from contextlib import asynccontextmanager
 from typing import Awaitable, Callable, Self  # type: ignore
 
+import jinja2
+import sentry_sdk
 import structlog
 from asgi_correlation_id import CorrelationIdMiddleware
 from ddtrace.contrib.asgi import TraceMiddleware
 from ddtrace.trace import tracer
 from fastapi import FastAPI as BaseFastAPI
-from fastapi import Request
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 from redis import Redis
 from redis.asyncio import Redis as AsyncRedis
-from starlette.requests import HTTPConnection
 from structlog.types import EventDict, Processor
 from taskiq import InMemoryBroker, TaskiqEvents, TaskiqMiddleware, TaskiqState
 from taskiq.abc.broker import AsyncBroker
@@ -19,13 +23,30 @@ from taskiq.result_backends.dummy import DummyResultBackend
 from taskiq_redis import ListQueueBroker, RedisAsyncResultBackend
 
 from correspondence.api.endpoints import router as api_router
+from correspondence.builtins.extensions import CorrespondenceExtension
 from correspondence.cache import Cache, InMemoryCache, RedisCache
+from correspondence.conf import Broker as BrokerSettings
+from correspondence.conf import Cache as CacheSettings
+from correspondence.conf import Environment, Settings
 from correspondence.db.engine import DatabaseEngine
 from correspondence.middleware.logging import LoggingMiddleware
-from correspondence.settings import Broker as BrokerSettings
-from correspondence.settings import Cache as CacheSettings
-from correspondence.settings import Environment, Settings
-from correspondence.web.endpoints import router as web_router
+from correspondence.provider import Provider
+from correspondence.utils import import_string
+from correspondence.web.automessage import router as automessage_router
+from correspondence.web.hooks import router as hooks_router
+from correspondence.web.root import router as root_router
+
+
+@asynccontextmanager
+async def lifespan(app: "FastAPI"):
+    if not app.broker.is_worker_process:
+        await app.broker.startup()
+    yield
+    if not app.broker.is_worker_process:
+        await app.broker.shutdown()
+
+
+root_dir = pathlib.Path(__file__).resolve().parent
 
 
 class FastAPI(BaseFastAPI):
@@ -33,15 +54,22 @@ class FastAPI(BaseFastAPI):
     cache: Cache
     db: DatabaseEngine
     settings: Settings
+    provider: Provider
+    templates = type[Jinja2Templates]
 
     @classmethod
     def from_settings(cls, settings: Settings) -> Self:
-        app = cls(debug=settings.DEBUG)
+        app = cls(lifespan=lifespan, debug=settings.DEBUG)
         app.settings = settings
-        app.include_router(web_router)
+        app.mount("/static", StaticFiles(directory=root_dir / "static"), name="static")
+        app.include_router(root_router)
+        app.include_router(automessage_router)
         app.include_router(api_router)
+        app.include_router(hooks_router)
         app.setup_logging()
         app.setup_database()
+        app.setup_templates()
+        app.setup_error_reporting()
 
         if settings.ENV != Environment.testing:
             app.add_middleware(
@@ -64,11 +92,40 @@ class FastAPI(BaseFastAPI):
 
         app.setup_broker()
         app.setup_cache()
+        app.setup_provider()
 
         return app
 
+    def setup_error_reporting(self):
+        if not self.settings.SENTRY_DSN:
+            return
+
+        sentry_sdk.init(
+            dsn=self.settings.SENTRY_DSN,
+            send_default_pii=True,
+        )
+
+    def setup_templates(self):
+        loader = jinja2.FileSystemLoader(root_dir / "templates")
+        template_env = jinja2.Environment(loader=loader, autoescape=True)
+        template_env.extensions.update(
+            {"correspondence": CorrespondenceExtension(template_env, app=self)}
+        )
+
+        self.templates = Jinja2Templates(env=template_env)
+
+    def setup_provider(self):
+        klass = import_string(self.settings.SMS_PROVIDER_CLASS)
+
+        self.provider = klass(
+            account=self.settings.SMS_PROVIDER_ACCOUNT,
+            token=self.settings.SMS_PROVIDER_TOKEN,
+        )
+
     def setup_database(self):
-        engine = DatabaseEngine(self.settings.DATABASE_URL)
+        engine = DatabaseEngine(
+            self.settings.HEROKU_DATABASE_URL or self.settings.DATABASE_URL
+        )
         engine.ping()
         self.db = engine
 
@@ -90,6 +147,9 @@ class FastAPI(BaseFastAPI):
 
     def startup_event_generator(self) -> Callable[[TaskiqState], Awaitable[None]]:
         async def startup(state: TaskiqState) -> None:
+            if not self.broker.is_worker_process:
+                return
+
             state.fastapi_app = self
             self.router.routes = []
             await self.router.startup()
@@ -98,6 +158,9 @@ class FastAPI(BaseFastAPI):
 
     def shutdown_event_generator(self) -> Callable[[TaskiqState], Awaitable[None]]:
         async def startup(_: TaskiqState) -> None:
+            if not self.broker.is_worker_process:
+                return
+
             await self.router.shutdown()
 
         return startup
@@ -113,48 +176,21 @@ class FastAPI(BaseFastAPI):
                 result_ex_time=600,  # 10 minutes expiration
             )
 
-        broker = InMemoryBroker()
+        self.broker = InMemoryBroker()
         if self.settings.BROKER_BACKEND == BrokerSettings.redis:
-            broker = ListQueueBroker(
+            self.broker = ListQueueBroker(
                 url=str(self.settings.BROKER_REDIS_URL),
             ).with_result_backend(result_backend)
-            broker.add_middlewares(Middleware())
+            self.broker.add_middlewares(Middleware())
 
-        self.broker = broker
-
-        @self.on_event("startup")
-        async def _():
-            if not broker.is_worker_process:
-                await broker.startup()
-
-        @self.on_event("shutdown")
-        async def _():
-            if not broker.is_worker_process:
-                await broker.shutdown()
-
-        if not broker.is_worker_process:
-            return
-
-        broker.add_event_handler(
+        self.broker.add_event_handler(
             TaskiqEvents.WORKER_STARTUP,
             self.startup_event_generator(),
         )
 
-        broker.add_event_handler(
+        self.broker.add_event_handler(
             TaskiqEvents.WORKER_SHUTDOWN,
             self.shutdown_event_generator(),
-        )
-
-        self.populate_dependency_context()
-
-    def populate_dependency_context(self) -> None:
-        scope = {"app": self, "type": "http"}
-
-        self.broker.add_dependency_context(
-            {
-                Request: Request(scope=scope),
-                HTTPConnection: HTTPConnection(scope=scope),
-            },
         )
 
     def setup_logging(self):
