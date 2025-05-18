@@ -14,28 +14,42 @@ dependencies = [
     "typer>=0.15.4",
     "uvicorn>=0.34.2",
     "cacheout>=0.16.0",
-    "pydantic>=2.11.4",
+    "pydantic[email]>=2.11.4",
+    "cryptography>=45.0.2",
     "httpx>=0.28.1",
     "sqlalchemy-utils>=0.41.2",
     "structlog>=25.3.0",
     "pydantic-settings>=2.9.1",
+    "pyjwt>=2.10.1",
     "uvloop>=0.21.0",
-    "alembic>=1.15.2",
+    "alembic>=1.16.1",
     "types-redis>=4.6.0.20241004",
     "greenlet>=3.2.2",
     "asgi-correlation-id>=4.3.4",
-    "ddtrace>=3.7.0",
+    "ddtrace>=3.7.1",
     "sqlalchemy-searchable>=2.1.0",
+    "pydantic-extra-types>=2.10.4",
+    "pycountry>=24.6.1",
+    "phonenumbers>=9.0.5",
+    "bcrypt>=4.3.0",
+    "python-multipart>=0.0.20",
+    "jinja2>=3.1.6",
+    "babel>=2.17.0",
+    "sentry-sdk>=2.29.1",
+    "ipython>=9.2.0",
 ]
 
 [tool.uv]
 dev-dependencies = [
     "black>=25.1.0",
     "ipdb>=0.13.13",
-    "ipython>=9.2.0",
     "isort>=6.0.1",
     "mypy>=1.15.0",
     "pytest>=8.3.5",
     "pytest-asyncio>=0.26.0",
     "ruff>=0.11.10",
 ]
+
+[[tool.mypy.overrides]]
+module = ["sqlalchemy_utils.*", "cacheout.*"]
+follow_untyped_imports = true

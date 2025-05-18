@@ -1,9 +1,12 @@
-from datetime import datetime, timezone
+from datetime import datetime
+from typing import TypeVar
 
-from sqlalchemy import INTEGER, TIMESTAMP, MetaData, func
+from sqlalchemy import INTEGER, TIMESTAMP, MetaData
+from sqlalchemy.ext.asyncio import AsyncAttrs
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from sqlalchemy_utils import force_auto_coercion, force_instant_defaults
-from sqlalchemy.ext.asyncio import AsyncAttrs
+
+from correspondence.utils import utc_now
 
 from .mixins import ModelMixin
 
@@ -21,10 +24,6 @@ my_metadata = MetaData(
 )
 
 
-def utc_now() -> datetime:
-    return datetime.now(timezone.utc)
-
-
 class BaseModel(DeclarativeBase):
     __abstract__ = True
 
@@ -35,13 +34,13 @@ class TimestampedModel(BaseModel):
     __abstract__ = True
 
     created_at: Mapped[datetime] = mapped_column(
-        TIMESTAMP(timezone=True), nullable=False, default=func.UTC_TIMESTAMP()
+        TIMESTAMP(timezone=True), nullable=False, default=utc_now
     )
-    updated_at: Mapped[datetime | None] = mapped_column(
+    updated_at: Mapped[datetime] = mapped_column(
         TIMESTAMP(timezone=True),
-        onupdate=func.UTC_TIMESTAMP(),
-        nullable=True,
-        default=None,
+        onupdate=utc_now,
+        nullable=False,
+        default=utc_now,
     )
 
 
@@ -52,3 +51,6 @@ class Model(TimestampedModel, ModelMixin, AsyncAttrs):
         INTEGER,
         primary_key=True,
     )
+
+
+ModelType = TypeVar("ModelType", bound=Model)

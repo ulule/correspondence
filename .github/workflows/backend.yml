@@ -6,8 +6,11 @@ on:
   pull_request:
     branches: [main]
 
+env:
+  PYTHON_VERSION: 3.13
+
 jobs:
-  build:
+  tests:
     runs-on: ubuntu-latest
     services:
       # Label used to access the service container
@@ -33,7 +36,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: 3.13
+          python-version: "${{ env.PYTHON_VERSION }}"
       - name: Install dependencies
         run: |
           uv sync
@@ -51,7 +54,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: 3.11.4
+          python-version: "${{ env.PYTHON_VERSION }}"
       - name: Install dependencies
         run: |
           uv sync
@@ -67,7 +70,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: 3.11.4
+          python-version: "${{ env.PYTHON_VERSION }}"
       - name: Install dependencies
         run: |
           uv sync

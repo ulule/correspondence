@@ -24,7 +24,12 @@ class Cache(str, Enum):
 
 
 class Settings(BaseSettings):
+    SENTRY_DSN: str | None = None
+    DEFAULT_COUNTRY: str = "FR"
+    SESSION_COOKIE_NAME: str = "correspondence_session"
+    SESSION_COOKIE_AGE: int = 60 * 60 * 24 * 31  # 31 days
     ENV: Environment = Environment.development
+    HEROKU_DATABASE_URL: PostgresDsn | None = None
     DATABASE_URL: PostgresDsn
     CACHE_BACKEND: str = Cache.inmemory
     CACHE_REDIS_URL: Optional[RedisDsn] = None
@@ -36,6 +41,9 @@ class Settings(BaseSettings):
     SECRET: str = "super secret jwt secret"
     LOG_LEVEL: str = "INFO"
     LOG_JSON_FORMAT: bool = False
+    SMS_PROVIDER_CLASS: str = "correspondence.provider.NoopProvider"
+    SMS_PROVIDER_ACCOUNT: str = ""
+    SMS_PROVIDER_TOKEN: str = ""
 
 
 env = Environment(os.getenv("CORRESPONDENCE_API_ENV", Environment.development))

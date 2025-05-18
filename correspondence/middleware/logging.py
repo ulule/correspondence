@@ -1,56 +1,67 @@
 import json
 import time
-from typing import Callable
+from typing import Any
 
 import structlog
 from asgi_correlation_id.context import correlation_id
-from fastapi import FastAPI, Request, Response
-from starlette.middleware.base import BaseHTTPMiddleware
+from fastapi import Request
 from starlette.routing import Match
+from starlette.types import ASGIApp, Message, Receive, Scope, Send
 from uvicorn.protocols.utils import get_path_with_query_string
 
 
-class AsyncIteratorWrapper:
-    """The following is a utility class that transforms a
-    regular iterable to an asynchronous one.
+class WrappedReceive:
+    request: Request
+    receive: Receive
+    body: dict[str, Any] | None
 
-    link: https://www.python.org/dev/peps/pep-0492/#example-2
-    """
+    def __init__(self, request: Request, receive: Receive):
+        self.request = request
+        self.receive = receive
+        self.body = None
 
-    def __init__(self, obj):
-        self._it = iter(obj)
+    async def handle(self) -> Message:
+        message = await self.receive()
+        if self.request.headers.get("content-type") == "application/json" and (
+            body := message.get("body")
+        ):
+            try:
+                self.body = json.loads(body)
+            except Exception:
+                pass
 
-    def __aiter__(self):
-        return self
-
-    async def __anext__(self):
-        try:
-            value = next(self._it)
-        except StopIteration:
-            raise StopAsyncIteration
-        return value
+        return message
 
 
-class LoggingMiddleware(BaseHTTPMiddleware):
+class LoggingMiddleware:
+    app: ASGIApp
+    logger: structlog.stdlib.BoundLogger
+
     def __init__(
-        self, app: FastAPI, *, logger: structlog.BoundLogger, log_response: bool = False
+        self,
+        app: ASGIApp,
+        *,
+        logger: structlog.stdlib.BoundLogger,
     ):
         self.app = app
         self.logger = logger
-        self.log_response = log_response
 
-        super().__init__(app)
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
 
-    async def dispatch(self, request: Request, call_next: Callable) -> Response:
         structlog.contextvars.clear_contextvars()
         # These context vars will be added to all log entries emitted during the request
         request_id = correlation_id.get()
         structlog.contextvars.bind_contextvars(request_id=request_id)
 
-        app = request.app
+        request = Request(scope, receive, send)
+
+        app = self.app.app  # type: ignore
 
         matching_route = None
-        for route in app.router.routes:
+        for route in app.routes:
             match, _ = route.matches(request.scope)
             if match == Match.FULL:
                 matching_route = route
@@ -58,23 +69,30 @@ class LoggingMiddleware(BaseHTTPMiddleware):
                 matching_route = route
 
         start_time = time.perf_counter_ns()
+
+        async def custom_send(message: Message):
+            if message["type"] == "http.response.start":
+                if status_code := message.get("status"):
+                    scope["status_code"] = status_code
+
+            await send(message)
+
         # If the call_next raises an error, we still want to return our own 500 response,
         # so we can add headers to it (process time, request ID...)
-        response = None
+        wrapped_receive = WrappedReceive(request, receive)
         try:
-            response = await call_next(request)
+            await self.app(scope, wrapped_receive.handle, custom_send)
         except Exception as exc:
             raise exc
-        else:
-            return response
         finally:
+            status_code = scope.get("status_code") or 500
             process_time = (time.perf_counter_ns() - start_time) / 10**9
-            status_code = 500
-            if response:
-                status_code = response.status_code
-            url = get_path_with_query_string(request.scope)
-            client_host = request.client.host  # type: ignore
-            client_port = request.client.port  # type: ignore
+            url = get_path_with_query_string(scope)  # type: ignore
+            client_host = ""
+            client_port = 0
+            if request.client:
+                client_host = request.client.host
+                client_port = request.client.port
             http_method = request.method
             http_version = request.scope["http_version"]
 
@@ -100,26 +118,8 @@ class LoggingMiddleware(BaseHTTPMiddleware):
             if matching_route is not None:
                 params["route"] = matching_route.name
 
-            try:
-                body = await request.json()
-                params["payload"] = body
-            except Exception:
-                body = None
-
-            if self.log_response and response is not None:
-                bodies = [
-                    section async for section in response.__dict__["body_iterator"]
-                ]
-                response.__setattr__("body_iterator", AsyncIteratorWrapper(bodies))
-                resp_body = ""
-
-                try:
-                    resp_body = json.loads(bodies[0].decode())
-                except Exception:
-                    resp_body = str("".join(bodies))
-
-                if resp_body:
-                    params["body"] = resp_body
+            if wrapped_receive.body:
+                params["payload"] = wrapped_receive.body
 
             self.logger.info(
                 f"""{client_host}:{client_port} - "{http_method} {url} HTTP/{http_version}" {status_code}""",

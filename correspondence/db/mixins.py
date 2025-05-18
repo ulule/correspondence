@@ -1,79 +1,213 @@
-from enum import Enum as BaseEnum
 from functools import cache
-from typing import Any, ClassVar, Self, Sequence  # type: ignore
+from typing import Any, ClassVar, Generic, Self, Sequence, Type, TypeVar
 
 from fastapi import HTTPException
-from pydantic import BaseModel
-from sqlalchemy import Column, inspect
-from sqlalchemy.orm import InstrumentedAttribute, Session
+from sqlalchemy import Column, func
+from sqlalchemy.orm import InstrumentedAttribute
 from sqlalchemy.orm.properties import MappedColumn
+from sqlalchemy.sql import ColumnElement
+from sqlalchemy.sql.base import ExecutableOption
 from sqlalchemy.sql.selectable import FromClause
-from sqlalchemy_utils import ChoiceType
 
-from correspondence.utils import Enum
+from correspondence.db.sql import Select, delete, update
+from correspondence.utils import utc_now
 
 from .engine import AsyncSession
 from .sql import exists, select
+
+T = TypeVar("T", bound=Any)
+
+
+class Repository(Generic[T]):
+    session: AsyncSession
+    klass: Type[T]
+
+    def __init__(self, klass, session: AsyncSession):
+        self.session = session
+        self.klass = klass
+
+    async def refresh_from_db(self, instance: T) -> T | None:
+        return await self.aget(instance.pk)
+
+    async def aget(
+        self, id: Any, key: str = "id", options: list[ExecutableOption] | None = None
+    ) -> T | None:
+        return await self.aget_by(filter_by={key: id}, options=options)
+
+    async def aget_by(
+        self,
+        filter_by: dict[str, Any] | None = None,
+        options: list[ExecutableOption] | None = None,
+        clauses: list[ColumnElement[bool]] | None = None,
+    ) -> T | None:
+        query = select(self.klass)
+        if filter_by is not None:
+            query = query.filter_by(**filter_by)
+        if clauses:
+            query = query.where(*clauses)
+        if options:
+            query = query.options(*options)
+
+        return await self.aget_one_or_none(query)
+
+    async def aget_one_or_none(self, statement: Select[tuple[T]]) -> T | None:
+        result = await self.session.execute(statement)
+        return result.unique().scalar_one_or_none()
+
+    async def aall(
+        self,
+        limit: int | None = None,
+        offset: int | None = None,
+        filter_by: dict[str, Any] | None = None,
+        order_by: InstrumentedAttribute | None = None,
+        clauses: list[ColumnElement[bool]] | None = None,
+    ) -> Sequence[T]:
+        qs = select(self.klass)
+        if limit is not None:
+            qs = qs.limit(limit)
+        if offset is not None:
+            qs = qs.offset(offset)
+        if order_by is not None:
+            qs = qs.order_by(order_by)
+        if filter_by is not None:
+            qs = qs.filter_by(**filter_by)
+        if clauses:
+            qs = qs.where(*clauses)
+        return await self.aget_all(qs)
+
+    async def acount(
+        self,
+        filter_by: dict[str, Any] | None = None,
+        *clause: ColumnElement[bool],
+    ) -> int:
+        qs = select(func.count(self.klass.pk_column()))
+        if filter_by is not None:
+            qs = qs.filter_by(**filter_by)
+        if clause:
+            qs = qs.where(*clause)
+
+        res = await self.session.scalar(qs)
+        return res or 0
+
+    async def aget_all(self, statement: Select[tuple[T]]) -> Sequence[T]:
+        result = await self.session.execute(statement)
+        return result.scalars().unique().all()
+
+    async def aexists(self, clauses: list[ColumnElement[bool]]) -> bool:
+        res = await self.session.scalar(exists().where(*clauses).select())
+        return bool(res)
+
+    async def aget_or_404(
+        self,
+        id: Any,
+        key: str = "id",
+        options: list[ExecutableOption] | None = None,
+    ) -> T:
+        return await self.aget_by_or_404(filter_by={key: id}, options=options)
+
+    async def aget_by_or_404(self, **kw: Any) -> T:
+        instance = await self.aget_by(**kw)
+        if not instance:
+            raise HTTPException(
+                status_code=404, detail=f"{self.klass.__name__} not found"
+            )
+
+        return instance
+
+    async def acreate(
+        self,
+        commit: bool = True,
+        **values: Any,
+    ) -> T:
+        instance = self.klass()
+        instance.fill(**values)
+
+        created = await instance.asave(self.session, commit=commit)
+        return created
+
+    async def asave(
+        self,
+        instance: T,
+        commit: bool = True,
+    ) -> T:
+        self.session.add(instance)
+        if commit and not self.session.in_nested_transaction():
+            await self.session.commit()
+
+        return instance
+
+    async def abulk_update(
+        self,
+        filter_by: dict[str, Any] | None = None,
+        clauses: list[ColumnElement[bool]] | None = None,
+        **values: Any,
+    ) -> None:
+        query = update(self.klass)
+        if filter_by:
+            query = query.filter_by(**filter_by)
+        if clauses:
+            query = query.where(*clauses)
+        query = query.values(**values)
+        await self.session.execute(query)
+        await self.session.flush()
+
+    async def abulk_delete(
+        self,
+        filter_by: dict[str, Any] | None = None,
+        clauses: list[ColumnElement[bool]] | None = None,
+    ) -> None:
+        query = delete(self.klass)
+        if filter_by:
+            query = query.filter_by(**filter_by)
+        if clauses:
+            query = query.where(*clauses)
+        await self.session.execute(query)
+        await self.session.flush()
+
+    async def asoft_delete(self, id: int) -> None:
+        stmt = (
+            update(self.klass)
+            .where(
+                self.klass.pk_column() == id,
+                getattr(self.klass, "deleted_at").is_(None),
+            )
+            .values(
+                deleted_at=utc_now(),
+            )
+        )
+        await self.session.execute(stmt)
+        await self.session.flush()
+
+    async def aget_or_create(
+        self,
+        options: list[ExecutableOption] | None = None,
+        defaults: dict[str, Any] | None = None,
+        **params: Any,
+    ) -> tuple[T, bool]:
+        instance = await self.aget_by(options=options, filter_by=params)
+        if not instance:
+            if defaults is not None:
+                params.update(defaults)
+            return await self.acreate(**params), True
+
+        return instance, False
+
+    async def adelete(self, instance: T) -> None:
+        await self.session.delete(instance)
+        await self.session.commit()
 
 
 class ModelMixin:
     __mutables__: set[Column[Any]] | set[str] | None = None
     __table__: ClassVar[FromClause]
-    asession: AsyncSession | None = None
+
+    @property
+    def pk(self) -> str:
+        return getattr(self, "id")
 
     @classmethod
-    def create(
-        cls,
-        session: Session,
-        autocommit: bool = True,
-        **values: Any,
-    ) -> Self:
-        instance = cls()
-        instance.fill(**values)
-
-        created = instance.save(session, autocommit=autocommit)
-        return created
-
-    @classmethod
-    def from_payload(cls, schema: BaseModel, **values: Any) -> Self:
-        instance = cls()
-        params: dict[str, Any] = {}
-        for k, v in schema.__class__.__signature__.parameters.items():
-            introspection = inspect(cls)
-            if introspection is None:
-                continue
-
-            column = getattr(introspection.columns, k)
-            value = getattr(schema, k)
-            if type(value) is getattr(column.type, "python_type"):
-                params[k] = value
-            elif issubclass(v.annotation, BaseEnum):
-                if not isinstance(column.type, ChoiceType):
-                    continue
-                if not hasattr(column.type, "choices"):
-                    continue
-                if not issubclass(column.type.choices, Enum):  # type: ignore
-                    continue
-
-                choices = column.type.choices.choices()
-                params[k] = choices[value.name]
-
-        instance = instance.fill(**dict(params, **values))
-        return instance
-
-    def update(
-        self,
-        session: Session,
-        autocommit: bool = True,
-        include: set[str] | None = None,
-        exclude: set[str] | None = None,
-        **values: Any,
-    ) -> Self:
-        if not include:
-            include = self.get_mutable_keys()
-        updated = self.fill(include=include, exclude=exclude, **values)
-        res = updated.save(session, autocommit=autocommit)
-        return res
+    def pk_column(cls):
+        return getattr(cls, "id")
 
     def fill(
         self,
@@ -92,97 +226,6 @@ class ModelMixin:
             if col not in exclude:
                 setattr(self, col, value)
         return self
-
-    def save(self, session: Session, autocommit: bool = True) -> Self:
-        session.add(self)
-        if autocommit:
-            session.commit()
-        return self
-
-    @classmethod
-    async def aget(
-        cls, asession: AsyncSession, id: Any, key: str = "id"
-    ) -> Self | None:
-        params = {}
-        params[key] = id
-        return await cls.aget_by(asession, **params)
-
-    @classmethod
-    def get(cls, session: Session, id: Any, key: str = "id") -> Self | None:
-        params = {}
-        params[key] = id
-        return cls.get_by(session, **params)
-
-    @classmethod
-    async def aall(
-        cls,
-        session: AsyncSession,
-        limit: int | None = None,
-        offset: int | None = None,
-        filter_by: dict[str, Any] | None = None,
-        order_by: InstrumentedAttribute | None = None,
-    ) -> Sequence[Self]:
-        qs = select(cls)
-        if limit is not None:
-            qs = qs.limit(limit)
-        if offset is not None:
-            qs = qs.offset(offset)
-        if order_by is not None:
-            qs = qs.order_by(order_by)
-        if filter_by is not None:
-            qs = qs.filter_by(**filter_by)
-        res = await session.scalars(qs)
-
-        instances = res.unique().all()
-        for instance in instances:
-            instance.asession = session
-
-        return instances
-
-    @classmethod
-    async def aexists(cls, session: AsyncSession, id: Any, key: str = "id") -> bool:
-        res = await session.scalar(exists().where(getattr(cls, key) == id).select())
-        return bool(res)
-
-    @classmethod
-    async def aget_or_404(
-        cls, id: Any, key: str = "id", asession: AsyncSession | None = None
-    ) -> Self:
-        params = {}
-        params[key] = id
-        params["asession"] = asession
-        return await cls.aget_by_or_404(**params)
-
-    @classmethod
-    async def aget_by(
-        cls,
-        asession: AsyncSession,
-        **params: Any,
-    ) -> Self | None:
-        query = select(cls).filter_by(**params)
-        res = await asession.execute(query)
-        return res.scalars().unique().one_or_none()
-
-    @classmethod
-    def get_by(
-        cls,
-        session: Session,
-        **params: Any,
-    ) -> Self | None:
-        query = select(cls).filter_by(**params)
-        res = session.execute(query)
-        return res.scalars().unique().one_or_none()
-
-    @classmethod
-    async def aget_by_or_404(
-        cls,
-        **params: Any,
-    ) -> Self:
-        instance = await cls.aget_by(**params)
-        if not instance:
-            raise HTTPException(status_code=404, detail=f"{cls.__name__} not found")
-
-        return instance
 
     @classmethod
     @cache
@@ -203,23 +246,29 @@ class ModelMixin:
         return columnNames - pks
 
     @classmethod
-    async def acreate(
-        cls,
-        asession: AsyncSession,
-        autocommit: bool = True,
-        **values: Any,
-    ) -> Self:
-        instance = cls()
-        instance.asession = values.pop("session", None)
-        instance.fill(**values)
+    def repository(cls, asession: AsyncSession) -> Repository[Self]:
+        return Repository(cls, asession)
 
-        created = await instance.asave(asession, autocommit=autocommit)
-        return created
+    async def adelete(self, asession: AsyncSession) -> None:
+        return await self.repository(asession).adelete(self)
 
     async def aupdate(
         self,
         asession: AsyncSession,
-        autocommit: bool = True,
+        **values: Any,
+    ) -> None:
+        model = self.__class__
+        return await model.repository(asession).abulk_update(
+            filter_by={"id": self.pk}, **values
+        )
+
+    async def refresh_from_db(self, asession: AsyncSession) -> Self | None:
+        return await self.repository(asession).refresh_from_db(self)
+
+    async def asave(
+        self,
+        asession: AsyncSession,
+        commit: bool = True,
         include: set[str] | None = None,
         exclude: set[str] | None = None,
         **values: Any,
@@ -227,14 +276,7 @@ class ModelMixin:
         if not include:
             include = self.get_mutable_keys()
         updated = self.fill(include=include, exclude=exclude, **values)
-        res = await updated.asave(asession, autocommit=autocommit)
-        return res
-
-    async def asave(self, asession: AsyncSession, autocommit: bool = True) -> Self:
-        asession.add(self)
-        if autocommit:
-            await asession.commit()
-        return self
+        return await self.repository(asession).asave(updated, commit=commit)
 
     def to_dict(self) -> dict[str, Any]:
         columns = []
