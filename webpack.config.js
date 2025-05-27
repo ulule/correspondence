@@ -1,22 +1,20 @@
 const path = require("path");
 
 const CopyPlugin = require("copy-webpack-plugin");
-const cssnano = require("cssnano");
 
 const { CleanWebpackPlugin } = require("clean-webpack-plugin");
 
-const OptimizeCssAssetsPlugin = require("optimize-css-assets-webpack-plugin");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const source = path.resolve(__dirname, "./correspondence/static/src");
 const dest = path.resolve(__dirname, "./correspondence/static/build");
 
 let plugins = [
-  new CopyPlugin([
+  new CopyPlugin({patterns: [
     {
       from: source + "/img/",
       to: dest + "/img/",
     },
-  ]),
+  ]}),
   new CleanWebpackPlugin({
     cleanAfterEveryBuildPatterns: ["dist"],
   }),
@@ -27,18 +25,6 @@ let plugins = [
 ];
 
 const env = process.env.NODE_ENV || "development";
-
-if (env == "production") {
-  plugins = [
-    ...plugins,
-    new OptimizeCssAssetsPlugin({
-      assetNameRegExp: /\.css$/g,
-      cssProcessor: cssnano,
-      cssProcessorOptions: { discardComments: { removeAll: true } },
-      canPrint: true,
-    }),
-  ];
-}
 
 module.exports = {
   mode: process.env.NODE_ENV,
