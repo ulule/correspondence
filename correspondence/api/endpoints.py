@@ -169,4 +169,6 @@ async def conversation_action(
 ) -> resources.ConversationResource:
     conversation = await conversation_service.mark_as(asession, conversation, action)
 
-    return resources.ConversationResource.from_model(conversation)
+    return resources.ConversationResource.from_model(
+        conversation, extra_fields=["receiver", "receiver.manager", "last_message"]
+    )
