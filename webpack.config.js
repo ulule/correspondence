@@ -1,25 +1,29 @@
 const path = require("path");
 
-const CopyWebpackPlugin = require("copy-webpack-plugin");
+const CopyPlugin = require("copy-webpack-plugin");
 const cssnano = require("cssnano");
 
-const CleanWebpackPlugin = require("clean-webpack-plugin");
+const { CleanWebpackPlugin } = require("clean-webpack-plugin");
+
 const OptimizeCssAssetsPlugin = require("optimize-css-assets-webpack-plugin");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
-const context = path.resolve(__dirname, "./correspondence/static/src"); // the home directory for webpack
+const source = path.resolve(__dirname, "./correspondence/static/src");
+const dest = path.resolve(__dirname, "./correspondence/static/build");
 
 let plugins = [
-  new CopyWebpackPlugin([
+  new CopyPlugin([
     {
-      from: "./img/",
-      to: "./build/img/"
-    }
+      from: source + "/img/",
+      to: dest + "/img/",
+    },
   ]),
-  new CleanWebpackPlugin(["dist"]),
+  new CleanWebpackPlugin({
+    cleanAfterEveryBuildPatterns: ["dist"],
+  }),
   new MiniCssExtractPlugin({
-    filename: "build/css/[name].css",
-    chunkFilename: "[id].css"
-  })
+    filename: "css/[name].css",
+    chunkFilename: "[id].css",
+  }),
 ];
 
 const env = process.env.NODE_ENV || "development";
@@ -31,35 +35,31 @@ if (env == "production") {
       assetNameRegExp: /\.css$/g,
       cssProcessor: cssnano,
       cssProcessorOptions: { discardComments: { removeAll: true } },
-      canPrint: true
-    })
+      canPrint: true,
+    }),
   ];
 }
 
 module.exports = {
   mode: process.env.NODE_ENV,
   optimization: {
-    minimize: true
+    minimize: true,
   },
-  node: {
-    fs: "empty"
-  },
-  context,
   entry: {
-    app: ["./js/app.js"],
-    main: ["./css/main.scss"],
-    admin: ["./css/admin.scss"]
+    app: [source + "/js/app.js"],
+    main: [source + "/css/main.scss"],
+    admin: [source + "/css/admin.scss"],
   },
   output: {
-    path: path.resolve(__dirname, "correspondence/static"),
-    filename: "build/js/[name].js"
+    path: dest,
+    filename: "js/[name].js",
   },
   module: {
     rules: [
       {
         test: /\.(js|jsx)$/,
         exclude: /node_modules/,
-        loader: "babel-loader"
+        use: ["babel-loader"],
       },
       {
         test: /.(ttf|otf|eot|svg|woff(2)?)(\?[a-z0-9]+)?$/,
@@ -68,31 +68,27 @@ module.exports = {
             loader: "file-loader",
             options: {
               name: "[name].[ext]",
-              outputPath: "./build/fonts/"
-            }
-          }
-        ]
-      },
-      {
-        test: /\.html$/,
-        loader: "raw-loader"
+              outputPath: "./build/fonts/",
+            },
+          },
+        ],
       },
       {
         test: /\.(sass|scss)$/,
         use: [
           "style-loader",
           {
-            loader: MiniCssExtractPlugin.loader
+            loader: MiniCssExtractPlugin.loader,
           },
           "css-loader",
           "postcss-loader",
-          "sass-loader"
-        ]
-      }
-    ]
+          "sass-loader",
+        ],
+      },
+    ],
   },
   plugins: plugins,
   stats: {
-    colors: true
-  }
+    colors: true,
+  },
 };
