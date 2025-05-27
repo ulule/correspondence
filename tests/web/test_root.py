@@ -156,3 +156,18 @@ async def test_signin(
     auth_state = await auth.get_auth_state_from_cookie(cookie, asession)
     assert auth_state.user.is_authenticated is True
     assert auth_state.user == staff_member
+
+
+@pytest.mark.asyncio
+async def test_logout(
+    aclient: AsyncClient,
+    staff_member: User,
+):
+    url = "/logout"
+    response = await aclient.get(
+        url, cookies={settings.SESSION_COOKIE_NAME: auth.get_user_token(staff_member)}
+    )
+
+    assert settings.SESSION_COOKIE_NAME not in response.cookies
+    assert response.status_code == status.HTTP_303_SEE_OTHER
+    assert response.headers["location"] == f"{aclient.base_url}/"

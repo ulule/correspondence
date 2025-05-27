@@ -119,8 +119,14 @@ async def admin(
 
 
 @router.get("/logout")
-async def logout():
-    return {"message": "ok"}
+async def logout(request: Request):
+    response = RedirectResponse(
+        url=request.url_for("root"), status_code=status.HTTP_303_SEE_OTHER
+    )
+
+    auth.disconnect(response)
+
+    return response
 
 
 @router.get("/panic")

@@ -40,6 +40,10 @@ def authenticate(user: User, response: Response) -> str:
     return token
 
 
+def disconnect(response: Response) -> None:
+    response.delete_cookie(settings.SESSION_COOKIE_NAME)
+
+
 async def get_auth_state_from_cookie(cookie: str, asession: AsyncSession) -> AuthState:
     try:
         data = jwt.decode(token=cookie)
