@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block main %}
+    <section class="section">
+        <div class="container">
+            <article class="message is-success" id="login__form">
+                <div class="message-header">
+                    <p>Login</p>
+                </div>
+                <div class="message-body">
+                    <form method="post" novalidate>
+                        <div class="field">
+                            <label class="label" for="email">Email</label>
+                            <div class="control">
+                                <input class="input" id="email" name="email" required="" type="text" value="{{ form.email }}">
+                            </div>
+
+                            {% if errors %}
+                                <p class="help is-danger">Email or password invalid</p>
+                            {% endif %}
+                        </div>
+
+                        <div class="field">
+                            <label class="label" for="password">Password</label>
+                            <div class="control">
+                                <input class="input" id="password" name="password" required="" type="password" value="{{ form.password }}">
+                            </div>
+                        </div>
+                        <div class="field is-grouped">
+                            <div class="control">
+                                <button class="button is-link">Submit</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </article>
+        </div>
+    </section>
+{% endblock %}

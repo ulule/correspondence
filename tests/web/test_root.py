@@ -1,7 +1,8 @@
 import pytest
 from fastapi import status
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from correspondence import jwt
+from correspondence import auth, jwt
 from correspondence.conf import settings
 from correspondence.models import Organization, User
 from correspondence.test.client import AsyncClient
@@ -94,21 +95,27 @@ async def test_root(
         "/",
     )
     assert response.status_code == status.HTTP_307_TEMPORARY_REDIRECT
-    assert response.headers["location"] == "/login"
+    assert response.headers["location"] == f"{aclient.base_url}/signin"
 
     response = await aclient.get(
         "/",
         user=default_organization.owner,
     )
     assert response.status_code == status.HTTP_307_TEMPORARY_REDIRECT
-    assert response.headers["location"] == f"/organizations/{default_organization.slug}"
+    assert (
+        response.headers["location"]
+        == f"{aclient.base_url}/organizations/{default_organization.slug}"
+    )
 
     response = await aclient.get(
         "/",
         user=default_user,
     )
     assert response.status_code == status.HTTP_307_TEMPORARY_REDIRECT
-    assert response.headers["location"] == f"/organizations/{default_organization.slug}"
+    assert (
+        response.headers["location"]
+        == f"{aclient.base_url}/organizations/{default_organization.slug}"
+    )
 
 
 @pytest.mark.asyncio
@@ -124,3 +131,28 @@ async def test_organization_detail(
         user=default_organization.owner,
     )
     assert response.status_code == status.HTTP_200_OK
+
+
+@pytest.mark.asyncio
+async def test_signin(
+    aclient: AsyncClient,
+    default_organization: Organization,
+    staff_member: User,
+    asession: AsyncSession,
+):
+    url = "/signin"
+    response = await aclient.get(url)
+    assert response.status_code == status.HTTP_200_OK
+
+    url = "/signin"
+    response = await aclient.post(
+        url, data={"email": staff_member.email, "password": DEFAULT_PASSWORD}
+    )
+    assert response.status_code == status.HTTP_303_SEE_OTHER
+    assert response.headers["location"] == f"{aclient.base_url}/"
+    assert settings.SESSION_COOKIE_NAME in response.cookies
+    cookie = response.cookies[settings.SESSION_COOKIE_NAME]
+
+    auth_state = await auth.get_auth_state_from_cookie(cookie, asession)
+    assert auth_state.user.is_authenticated is True
+    assert auth_state.user == staff_member

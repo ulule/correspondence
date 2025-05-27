@@ -40,13 +40,7 @@ def authenticate(user: User, response: Response) -> str:
     return token
 
 
-async def get_auth_state(
-    request: Request, asession: AsyncSession = Depends(deps.get_db_asession)
-) -> AuthState:
-    cookie = request.cookies.get(settings.SESSION_COOKIE_NAME)
-    if not cookie:
-        return AuthState(reason="authentication cookie not found", user=AnonymousUser())
-
+async def get_auth_state_from_cookie(cookie: str, asession: AsyncSession) -> AuthState:
     try:
         data = jwt.decode(token=cookie)
     except jwt.DecodeError:
@@ -67,6 +61,16 @@ async def get_auth_state(
     return AuthState(user=user)
 
 
+async def get_auth_state(
+    request: Request, asession: AsyncSession = Depends(deps.get_db_asession)
+) -> AuthState:
+    cookie = request.cookies.get(settings.SESSION_COOKIE_NAME)
+    if not cookie:
+        return AuthState(reason="authentication cookie not found", user=AnonymousUser())
+
+    return await get_auth_state_from_cookie(cookie, asession)
+
+
 async def get_authenticated_user(
     state: AuthState = Depends(get_auth_state),
 ) -> User:
@@ -76,32 +80,32 @@ async def get_authenticated_user(
     return state.user  # type:ignore
 
 
-async def get_user(state=Depends(get_auth_state)) -> User | AnonymousUser:
+async def get_user(state: AuthState = Depends(get_auth_state)) -> User | AnonymousUser:
     return state.user
 
 
-async def login(asession: AsyncSession, form: LoginForm) -> User:
+async def login(asession: AsyncSession, email: str, password: str) -> User:
     user = await User.repository(asession).aget_by(
-        filter_by={"email": form.email, "is_staff": True}
+        filter_by={"email": email, "is_staff": True}
     )
     errors = [
         {
             "type": "value_error",
             "loc": ("body", "email"),
             "msg": "A user does not exists either with this email or password",
-            "input": form.email,
+            "input": email,
         },
         {
             "type": "value_error",
             "loc": ("body", "password"),
             "msg": "A user does not exists either with this email or password",
-            "input": form.password,
+            "input": password,
         },
     ]
     if not user:
         raise RequestValidationError(errors)
 
-    if not user.check_password(form.password):
+    if not user.check_password(password):
         raise RequestValidationError(errors)
 
     return user

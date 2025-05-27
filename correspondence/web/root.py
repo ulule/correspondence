@@ -1,5 +1,8 @@
-from fastapi import (APIRouter, Depends, HTTPException, Request, Response,
-                     status)
+from typing import Annotated
+
+from fastapi import (APIRouter, Depends, Form, HTTPException, Request,
+                     Response, status)
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -13,6 +16,7 @@ router = APIRouter()
 
 @router.get("/")
 async def root(
+    request: Request,
     state: auth.AuthState = Depends(auth.get_auth_state),
     asession: AsyncSession = Depends(get_db_asession),
 ) -> RedirectResponse:
@@ -24,9 +28,13 @@ async def root(
                 detail="no organization attached to the user",
             )
 
-        return RedirectResponse(url=f"/organizations/{organization.slug}")
+        return RedirectResponse(
+            url=request.url_for(
+                "organization_detail", organization_slug=organization.slug
+            )
+        )
 
-    return RedirectResponse(url="/login")
+    return RedirectResponse(url=request.url_for("signin"))
 
 
 @router.get("/healthcheck")
@@ -59,10 +67,48 @@ async def login(
     response: Response,
     asession: AsyncSession = Depends(get_db_asession),
 ):
-    user = await auth.login(asession, form)
+    user = await auth.login(asession, form.email, form.password)
     token = auth.authenticate(user, response)
 
     return {"token": token}
+
+
+@router.get("/signin")
+async def signin(
+    request: Request,
+    asession: AsyncSession = Depends(get_db_asession),
+):
+    return request.app.templates.TemplateResponse(
+        request=request,
+        name="signin.html",
+        context={"form": {}},
+    )
+
+
+@router.post("/signin")
+async def signin_complete(
+    request: Request,
+    email: Annotated[str, Form()],
+    password: Annotated[str, Form()],
+    asession: AsyncSession = Depends(get_db_asession),
+) -> RedirectResponse:
+    try:
+        user = await auth.login(asession, email, password)
+    except RequestValidationError as e:
+        return request.app.templates.TemplateResponse(
+            request=request,
+            name="signin.html",
+            context={
+                "errors": e.errors(),
+                "form": {"email": email, "password": password},
+            },
+        )
+    else:
+        response = RedirectResponse(
+            url=request.url_for("root"), status_code=status.HTTP_303_SEE_OTHER
+        )
+        auth.authenticate(user, response)
+        return response
 
 
 @router.get("/admin")
@@ -79,4 +125,4 @@ async def logout():
 
 @router.get("/panic")
 async def trigger_error():
-    division_by_zero = 1 / 0
+    division_by_zero = 1 / 0  # noqa

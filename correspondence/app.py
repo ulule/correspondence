@@ -114,7 +114,8 @@ class FastAPI(BaseFastAPI):
         klass = import_string(self.settings.SMS_PROVIDER_CLASS)
 
         self.provider = klass(
-            account=self.settings.SMS_PROVIDER_ACCOUNT, token=self.settings.SMS_PROVIDER_TOKEN
+            account=self.settings.SMS_PROVIDER_ACCOUNT,
+            token=self.settings.SMS_PROVIDER_TOKEN,
         )
 
     def setup_database(self):
