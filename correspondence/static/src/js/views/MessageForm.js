@@ -80,7 +80,7 @@ const MessageForm = ({
                     placeholder="Message..."
                     onChange={handleChange}
                     onBlur={handleBlur}
-                    value={values.body}
+                    value={values && values.body}
                     ref={bodyFieldRef}
                   ></textarea>
                   {errors.body && (
@@ -94,10 +94,11 @@ const MessageForm = ({
                   <div
                     className={classNames("countdown", {
                       "countdown--danger":
-                        values.body && values.body.length > maxLength
+                        values && values.body && values.body.length > maxLength
                     })}
                   >
-                    {(values.body && values.body.length) || 0}/{maxLength}
+                    {(values && values.body && values.body.length) || 0}/
+                    {maxLength}
                   </div>
                 </div>
                 <div
