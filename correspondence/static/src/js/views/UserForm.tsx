@@ -29,9 +29,9 @@ type UserFormProps = {
   submit?: boolean;
   onErrors?: (values: types.P) => void;
   formErrors?: types.P;
-  managers: types.User[]
-  authenticatedUser?: types.User
-  countries: types.Countries
+  managers: types.User[];
+  authenticatedUser?: types.User;
+  countries: types.Countries;
 };
 
 const UserForm = ({
@@ -57,7 +57,9 @@ const UserForm = ({
     }
   }, [submit]);
 
-  const userData = filterNulls(user || { manager_id: authenticatedUser && authenticatedUser.id });
+  const userData = filterNulls(
+    user || { manager_id: authenticatedUser && authenticatedUser.id }
+  );
 
   return (
     <Formik
@@ -114,7 +116,9 @@ const UserForm = ({
                       ))}
                     </select>
                     {errors.manager_id && (
-                      <p className="help is-danger">{errors.manager_id as string}</p>
+                      <p className="help is-danger">
+                        {errors.manager_id as string}
+                      </p>
                     )}
                     {formErrors.manager_id && (
                       <p className="help is-danger">{formErrors.manager_id}</p>
@@ -140,7 +144,9 @@ const UserForm = ({
                       ))}
                     </select>
                     {errors.country && (
-                      <p className="help is-danger">{errors.country as string}</p>
+                      <p className="help is-danger">
+                        {errors.country as string}
+                      </p>
                     )}
                     {formErrors.country && (
                       <p className="help is-danger">{formErrors.country}</p>
@@ -185,7 +191,9 @@ const UserForm = ({
                     <i className="fas fa-user"></i>
                   </span>
                   {errors.first_name && (
-                    <p className="help is-danger">{errors.first_name as string}</p>
+                    <p className="help is-danger">
+                      {errors.first_name as string}
+                    </p>
                   )}
                 </p>
               </div>
@@ -204,7 +212,9 @@ const UserForm = ({
                     <i className="fas fa-user"></i>
                   </span>
                   {errors.last_name && (
-                    <p className="help is-danger">{errors.last_name as string}</p>
+                    <p className="help is-danger">
+                      {errors.last_name as string}
+                    </p>
                   )}
                 </p>
               </div>
@@ -224,7 +234,9 @@ const UserForm = ({
                     <i className="fas fa-phone"></i>
                   </span>
                   {errors.phone_number && (
-                    <p className="help is-danger">{errors.phone_number as string}</p>
+                    <p className="help is-danger">
+                      {errors.phone_number as string}
+                    </p>
                   )}
                   {formErrors.phone_number && (
                     <p className="help is-danger">{formErrors.phone_number}</p>
