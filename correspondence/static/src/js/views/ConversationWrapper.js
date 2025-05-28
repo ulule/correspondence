@@ -4,6 +4,7 @@ import ConversationContainer from "./ConversationContainer";
 import api from "../api";
 import ConversationModel from "../models/ConversationModel";
 import sanitize from "../utils/sanitize";
+import { useParams } from "react-router";
 
 const usePrevious = value => {
   const ref = useRef();
@@ -19,7 +20,6 @@ const loadConversation = async conversationId => {
 };
 
 const ConversationWrapper = ({
-  match,
   authenticatedUser,
   history,
   managers,
@@ -131,14 +131,17 @@ const ConversationWrapper = ({
     });
   };
 
-  const previousParamValue = usePrevious(
-    match && match.params && match.params.id
-  );
+  const { id: conversationId } = useParams();
+
+  const previousParamValue = usePrevious(conversationId && conversationId);
 
   useEffect(() => {
-    if (!previousParamValue || previousParamValue != match.params.id) {
-      if (match.params.id) {
-        onConversationFocus(match.params.id);
+    if (
+      !previousParamValue ||
+      (conversationId && previousParamValue != conversationId)
+    ) {
+      if (conversationId) {
+        onConversationFocus(conversationId);
       }
     }
   });

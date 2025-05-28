@@ -89,7 +89,7 @@ const UserForm = props => {
             <form onSubmit={handleSubmit}>
               <div className="field">
                 <label className="label">Manager</label>
-                <p className="control is-expanded">
+                <div className="control is-expanded">
                   <div className="select">
                     <select
                       name="manager_id"
@@ -114,11 +114,11 @@ const UserForm = props => {
                       <p className="help is-danger">{formErrors.manager_id}</p>
                     )}
                   </div>
-                </p>
+                </div>
               </div>
               <div className="field">
                 <label className="label">Country</label>
-                <p className="control is-expanded">
+                <div className="control is-expanded">
                   <div className="select">
                     <select
                       name="country"
@@ -140,7 +140,7 @@ const UserForm = props => {
                       <p className="help is-danger">{formErrors.country}</p>
                     )}
                   </div>
-                </p>
+                </div>
               </div>
               <div className="field">
                 <label className="label">Email</label>

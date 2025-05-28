@@ -1,5 +1,5 @@
 import "@fortawesome/fontawesome-free/js/all";
-import ReactDOM from "react-dom";
+import ReactDOM from "react-dom/client";
 
 import PropTypes from "prop-types";
 import React, { useState } from "react";
@@ -9,7 +9,7 @@ import Modal from "./components/Modal";
 import UserForm from "./views/UserForm";
 import ConversationWrapper from "./views/ConversationWrapper";
 import sanitize from "./utils/sanitize";
-import { HashRouter, Route, Redirect } from "react-router-dom";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
 
 const Conversations = ({
   authenticatedUser,
@@ -86,30 +86,34 @@ const Conversations = ({
         />
       </Modal>
 
-      <HashRouter>
-        <Route
-          exact
-          path="/"
-          render={() => <Redirect to="/conversations/" />}
-        />
-        <Route
-          path="/conversations/:id?"
-          exact
-          component={routeProps => {
-            history = routeProps.history;
-
-            return (
+      <BrowserRouter>
+        <Routes>
+          <Route
+            path="/organizations/:slug/conversations?"
+            exact
+            element={
               <ConversationWrapper
-                {...routeProps}
                 organization={organization}
                 authenticatedUser={authenticatedUser}
                 countries={countries}
                 managers={managers}
               />
-            );
-          }}
-        />
-      </HashRouter>
+            }
+          />
+          <Route
+            path="/organizations/:slug/conversations/:id"
+            exact
+            element={
+              <ConversationWrapper
+                organization={organization}
+                authenticatedUser={authenticatedUser}
+                countries={countries}
+                managers={managers}
+              />
+            }
+          />
+        </Routes>
+      </BrowserRouter>
     </div>
   );
 };
@@ -136,14 +140,17 @@ window.addEventListener("DOMContentLoaded", () => {
       entry => organization.supported_countries.indexOf(entry[0]) !== -1
     );
 
-    ReactDOM.render(
+    const root = ReactDOM.createRoot(
+      document.getElementById("conversations-container")
+    );
+
+    root.render(
       <Conversations
         authenticatedUser={window.CDE.authenticatedUser}
         organization={organization}
         countries={supportedCountries}
         managers={managers.data}
-      />,
-      document.getElementById("conversations-container")
+      />
     );
   })();
 });

@@ -2,7 +2,7 @@ import React from "react";
 import formatDistanceToNow from "date-fns/formatDistanceToNow";
 import parseISO from "date-fns/parseISO";
 import Avatar from "../components/Avatar";
-import { Link } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 
 const ConversationItem = ({ conversation } = props) => {
   const { receiver, last_message } = conversation;
@@ -15,8 +15,12 @@ const ConversationItem = ({ conversation } = props) => {
     createdAt = parseISO(last_message.created_at);
   }
 
+  const { slug: organizationSlug } = useParams();
+
   return (
-    <Link to={conversation.absoluteUrl}>
+    <Link
+      to={`/organizations/${organizationSlug}/conversations/${conversation.receiver.id}`}
+    >
       <div className="conversation__item-container">
         <header className="conversation__item__head">
           <div className="conversation__item__user__avatar">

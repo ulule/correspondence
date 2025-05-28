@@ -42,9 +42,10 @@ async def healthcheck():
     return {"message": "ok"}
 
 
-@router.get("/organizations/{organization_slug}")
+@router.get("/organizations/{organization_slug}/{rest:path}")
 async def organization_detail(
     request: Request,
+    path: str | None = None,
     organization: Organization = Depends(get_organization_by_slug),
     authenticated_user: User = Depends(auth.get_authenticated_user),
 ):
