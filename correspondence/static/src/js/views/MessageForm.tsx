@@ -1,7 +1,8 @@
-import React, { useEffect, useRef } from "react";
-import { Formik } from "formik";
+import * as React from "react";
+import { Formik, FormikState } from "formik";
 import classNames from "classnames";
 import * as Yup from "yup";
+import * as types from "../types";
 
 const MessageSchema = Yup.object().shape({
   body: Yup.string().required("This field is required."),
@@ -9,24 +10,30 @@ const MessageSchema = Yup.object().shape({
 
 const DEFAULT_MAX_LENGTH = 160;
 
-const MessageForm = ({
+type MessageFormProps = {
+  onSubmit: (values: types.P, cb: () => void) => void;
+  focus: boolean;
+  maxLength?: number;
+};
+
+export default function MessageForm({
   onSubmit,
   focus,
   maxLength = DEFAULT_MAX_LENGTH,
-} = props) => {
-  let formSubmit;
-  let formReset;
+}: MessageFormProps): React.ReactElement {
+  let formSubmit: (e?: React.FormEvent<HTMLElement>) => void;
+  let formReset: (nextState?: Partial<FormikState<{ body: string }>>) => void;
 
-  const bodyFieldRef = useRef(null);
+  const bodyFieldRef = React.useRef(null);
 
-  const handleKeydown = (e) => {
+  const handleKeydown = (e: KeyboardEvent) => {
     // Handle cmd+enter & ctrl+enter
     if (e.keyCode === 13 && (e.metaKey || e.ctrlKey) && formSubmit) {
       formSubmit();
     }
   };
-  useEffect(() => {
-    if (focus) {
+  React.useEffect(() => {
+    if (focus && bodyFieldRef.current) {
       bodyFieldRef.current.focus();
     }
 
@@ -46,7 +53,7 @@ const MessageForm = ({
       onSubmit={(values, { setSubmitting }) => {
         onSubmit(values, () => {
           setSubmitting(false);
-          formReset({ body: "" });
+          formReset({ values: { body: "" } });
         });
       }}
     >
@@ -82,6 +89,7 @@ const MessageForm = ({
                     onChange={handleChange}
                     onBlur={handleBlur}
                     value={values && values.body}
+                    ref={bodyFieldRef}
                   ></textarea>
                   {errors.body && (
                     <p className="help is-danger">{errors.body}</p>
@@ -122,6 +130,4 @@ const MessageForm = ({
       }}
     </Formik>
   );
-};
-
-export default MessageForm;
+}

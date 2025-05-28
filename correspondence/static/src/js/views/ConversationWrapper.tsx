@@ -1,44 +1,60 @@
-import React, { useState, useEffect, useRef } from "react";
+import * as React from "react";
 import ConversationList from "./ConversationList";
 import ConversationContainer from "./ConversationContainer";
 import api from "../api";
 import sanitize from "../utils/sanitize";
 import { useParams } from "react-router";
+import * as types from "../types";
 
-const usePrevious = (value) => {
-  const ref = useRef();
-  useEffect(() => {
+const usePrevious = (value: number) => {
+  const ref = React.useRef(null);
+  React.useEffect(() => {
     ref.current = value;
   });
   return ref.current;
 };
 
-const loadConversation = async (conversationId) => {
+const loadConversation = async (conversationId: number) => {
   let res = await api.get(`/users/${conversationId}/conversation`);
   return res.data;
 };
 
-const ConversationWrapper = ({
+type ConversationWrapperProps = {
+  authenticatedUser: types.User;
+  managers: types.User[];
+  organization: types.Organization;
+  countries: types.Countries;
+};
+
+type State = {
+  conversation: types.Conversation | null;
+  isNew: boolean;
+  selectedUsers: types.User[];
+  userUpdateErrors: types.Error[];
+};
+
+export default function ConversationWrapper({
   authenticatedUser,
-  history,
   managers,
   organization,
   countries,
-} = props) => {
-  const initialState = {
+}: ConversationWrapperProps): React.ReactElement {
+  const initialState: State = {
     conversation: null,
     isNew: false,
     selectedUsers: [],
     userUpdateErrors: [],
   };
 
-  const [state, setState] = useState(initialState);
+  const [state, setState] = React.useState<State>(initialState);
 
   const { isNew, conversation, selectedUsers, userUpdateErrors } = state;
 
-  const onUserUpdate = async (props) => {
+  const onUserUpdate = async ({
+    values: rawValues,
+  }: types.OnUserUpdateEvent) => {
     try {
-      const values = sanitize(props.values);
+      const values = sanitize(rawValues);
       const res = await api.patch(`/users/${conversation.receiver.id}/`, {
         first_name: values.first_name,
         last_name: values.last_name,
@@ -63,8 +79,11 @@ const ConversationWrapper = ({
     }
   };
 
-  const onConversationAction = async (action) => {
-    const res = await api.post(`/conversations/${conversation.id}/${action}/`);
+  const onConversationAction = async (action: string) => {
+    const res = await api.post(
+      `/conversations/${conversation.id}/${action}/`,
+      {}
+    );
     const conv = res.data;
 
     setState({
@@ -78,11 +97,9 @@ const ConversationWrapper = ({
       ...state,
       ...{ isNew: !isNew, selectedUsers: [] },
     });
-
-    history.push("/conversations");
   };
 
-  const onConversationFocus = async (conversationId, props = {}) => {
+  const onConversationFocus = async (conversationId: number, props = {}) => {
     const conv = await loadConversation(conversationId);
 
     setState({
@@ -96,7 +113,7 @@ const ConversationWrapper = ({
     });
   };
 
-  const onUserAdd = (user) => {
+  const onUserAdd = (user: types.User) => {
     const index = selectedUsers.findIndex((cur) => cur.id == user.id);
 
     if (index === -1) {
@@ -121,7 +138,7 @@ const ConversationWrapper = ({
     }
   };
 
-  const onUserRemove = (user) => {
+  const onUserRemove = (user: types.User) => {
     setState({
       ...state,
       ...{
@@ -132,15 +149,17 @@ const ConversationWrapper = ({
 
   const { id: conversationId } = useParams();
 
-  const previousParamValue = usePrevious(conversationId && conversationId);
+  const previousParamValue = usePrevious(
+    conversationId && parseInt(conversationId, 10)
+  );
 
-  useEffect(() => {
+  React.useEffect(() => {
     if (
       !previousParamValue ||
       (conversationId && previousParamValue != conversationId)
     ) {
       if (conversationId) {
-        onConversationFocus(conversationId);
+        onConversationFocus(parseInt(conversationId, 10));
       }
     }
   });
@@ -159,7 +178,6 @@ const ConversationWrapper = ({
         conversation={conversation}
         isNew={isNew}
         onAction={onConversationAction}
-        onFocus={onConversationFocus}
         onUserUpdate={onUserUpdate}
         countries={countries}
         errors={userUpdateErrors}
@@ -170,6 +188,4 @@ const ConversationWrapper = ({
       />
     </div>
   );
-};
-
-export default ConversationWrapper;
+}

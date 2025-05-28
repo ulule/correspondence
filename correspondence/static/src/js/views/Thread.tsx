@@ -1,12 +1,28 @@
-import React, { useRef, useEffect } from "react";
+import * as React from "react";
 import Message from "./Message";
 import classNames from "classnames";
+import * as types from "../types";
 
-const Thread = ({ conversation, messages, onScroll } = props) => {
-  const messagesEndRef = useRef(null);
+type ThreadProps = {
+  conversation: types.Conversation;
+  messages: MessagePage;
+  onScroll: () => void;
+};
+
+type MessagePage = {
+  data: types.Message[];
+  initial: boolean;
+};
+
+export default function Thread({
+  conversation,
+  messages,
+  onScroll,
+}: ThreadProps): React.ReactElement {
+  const messagesEndRef = React.useRef(null);
 
   // keep the scroll position on scroll to the top
-  useEffect(() => {
+  React.useEffect(() => {
     if (!messages.initial) {
       return;
     }
@@ -27,7 +43,7 @@ const Thread = ({ conversation, messages, onScroll } = props) => {
         ref={messagesEndRef}
         onScroll={handleScroll}
       >
-        {messages.data.map(message => (
+        {messages.data.map((message) => (
           <li
             key={message.id}
             className={classNames({
@@ -35,7 +51,7 @@ const Thread = ({ conversation, messages, onScroll } = props) => {
               "conversation__message-list__item--received":
                 conversation && message.sender.id == conversation.receiver.id,
               "conversation__message-list__item--sent":
-                !conversation || message.sender.id != conversation.receiver.id
+                !conversation || message.sender.id != conversation.receiver.id,
             })}
           >
             <Message message={message} />
@@ -44,6 +60,4 @@ const Thread = ({ conversation, messages, onScroll } = props) => {
       </ul>
     </div>
   );
-};
-
-export default Thread;
+}

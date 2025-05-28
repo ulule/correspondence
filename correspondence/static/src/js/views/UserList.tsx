@@ -1,33 +1,56 @@
-import React, { useState, useRef, useEffect } from "react";
+import * as React from "react";
 import classNames from "classnames";
 import Avatar from "../components/Avatar";
 import api from "../api";
+import { PageMeta, User } from "../types";
 
-const usersInitialState = {
+type State = {
+  data: User[];
+  loading: boolean;
+  search: string;
+  meta: PageMeta;
+};
+
+const usersInitialState: State = {
   data: [],
   loading: false,
   search: "",
-  meta: { count: 0, next: null, total: 0 }
+  meta: { count: 0, next: null, total: 0 },
 };
 
-const UserList = ({ onUserAdd, onUserRemove, selectedUsers } = props) => {
-  const [typing, setTyping] = useState({ typing: false, timeout: 0 });
-  const [users, setUsers] = useState(usersInitialState);
+type UserListProps = {
+  onUserAdd: (user: User) => void;
+  onUserRemove: (user: User) => void;
+  selectedUsers: User[];
+};
 
-  const handleUserAdd = user => {
+type TypingState = {
+  typing: boolean;
+  timeout?: NodeJS.Timeout;
+};
+
+export default function UserList({
+  onUserAdd,
+  onUserRemove,
+  selectedUsers,
+}: UserListProps): React.ReactElement {
+  const [typing, setTyping] = React.useState<TypingState>({ typing: false });
+  const [users, setUsers] = React.useState<State>(usersInitialState);
+
+  const handleUserAdd = (user: User) => {
     setUsers(usersInitialState);
     searchInputRef.current.value = "";
 
     onUserAdd(user);
   };
 
-  const onSearchChange = name => {
+  const onSearchChange = (name: string) => {
     if (name === "") {
       setUsers({
         data: [],
         loading: false,
         search: "",
-        meta: { count: 0, next: null, total: 0 }
+        meta: { count: 0, next: null, total: 0 },
       });
 
       return;
@@ -43,20 +66,22 @@ const UserList = ({ onUserAdd, onUserRemove, selectedUsers } = props) => {
     })();
   };
 
-  const searchInputRef = useRef(null);
+  const searchInputRef = React.useRef(null);
 
-  useEffect(() => {
+  React.useEffect(() => {
     searchInputRef.current.focus();
   });
 
-  const handleChange = e => {
-    clearTimeout(typing.timeout);
+  const handleChange = () => {
+    if (typing.timeout) {
+      clearTimeout(typing.timeout);
+    }
 
     setTyping({
       typing: false,
       timeout: setTimeout(() => {
         onSearchChange(searchInputRef.current.value);
-      }, 500)
+      }, 500),
     });
   };
 
@@ -68,7 +93,7 @@ const UserList = ({ onUserAdd, onUserRemove, selectedUsers } = props) => {
             className={classNames({
               control: true,
               userlist__container: true,
-              "is-loading": users.loading
+              "is-loading": users.loading,
             })}
           >
             <span className="icon is-small">
@@ -76,7 +101,7 @@ const UserList = ({ onUserAdd, onUserRemove, selectedUsers } = props) => {
             </span>
             <div className="userlist">
               <div className="field is-grouped is-grouped-multiline">
-                {selectedUsers.map(user => (
+                {selectedUsers.map((user) => (
                   <div key={user.id} className="control">
                     <span className="tag is-link is-medium">
                       {user.name}
@@ -106,7 +131,7 @@ const UserList = ({ onUserAdd, onUserRemove, selectedUsers } = props) => {
         <div className="dropdown is-active">
           <div className="dropdown-menu" id="dropdown-menu" role="menu">
             <div className="dropdown-content">
-              {users.data.map(user => (
+              {users.data.map((user) => (
                 <a
                   key={user.id}
                   onClick={() => handleUserAdd(user)}
@@ -136,6 +161,4 @@ const UserList = ({ onUserAdd, onUserRemove, selectedUsers } = props) => {
       )}
     </>
   );
-};
-
-export default UserList;
+}

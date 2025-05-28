@@ -1,5 +1,7 @@
-const sanitize = values => {
-  Object.keys(values).forEach(key => {
+import { Values } from "../types";
+
+export function sanitize(values: Values): Values {
+  Object.keys(values).forEach((key) => {
     const value = values[key];
 
     if (value === "") {
@@ -8,6 +10,6 @@ const sanitize = values => {
   });
 
   return values;
-};
+}
 
 export default sanitize;

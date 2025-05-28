@@ -1,11 +1,9 @@
-import React from "react";
-import parseISO from "date-fns/parseISO";
-import format from "date-fns/format";
-import isToday from "date-fns/isToday";
-import isYesterday from "date-fns/isYesterday";
+import * as React from "react";
+import { parseISO, format, isToday, isYesterday } from "date-fns";
 import Avatar from "../components/Avatar";
+import { Message } from "../types";
 
-const getMessageDate = date => {
+function getMessageDate(date: Date): string {
   if (isToday(date)) {
     return "Today";
   }
@@ -14,9 +12,13 @@ const getMessageDate = date => {
   }
 
   return format(date, "iii d MMM");
+}
+
+type MessageProps = {
+  message: Message;
 };
 
-const Message = ({ message } = props) => {
+export default function Message({ message }: MessageProps): React.ReactElement {
   const createdAt = parseISO(message.created_at);
 
   return (
@@ -41,6 +43,4 @@ const Message = ({ message } = props) => {
       </div>
     </>
   );
-};
-
-export default Message;
+}

@@ -1,33 +1,48 @@
-import React, { useState, useEffect } from "react";
+import * as React from "react";
 import api from "../api";
 import Thread from "./Thread";
 import MessageForm from "./MessageForm";
+import * as types from "../types";
 
 const DEFAULT_LIMIT = 20;
 
-const ThreadContainer = ({
+type ThreadContainerProps = {
+  conversation: types.Conversation;
+  selectedUsers: types.User[];
+  messageFormFocus: boolean;
+};
+
+type State = {
+  data: types.Message[];
+  initial: boolean;
+  loading: boolean;
+  finished: boolean;
+  meta: types.PageMeta;
+};
+
+export default function ThreadContainer({
   conversation,
   messageFormFocus,
-  selectedUsers
-} = props) => {
-  const initialState = {
+  selectedUsers,
+}: ThreadContainerProps): React.ReactElement {
+  const initialState: State = {
     data: [],
     initial: true,
     loading: false,
     finished: false,
-    meta: { count: 0, next: null, total: 0 }
+    meta: { count: 0, next: null, total: 0 },
   };
 
-  const [messages, setMessages] = useState(initialState);
+  const [messages, setMessages] = React.useState<State>(initialState);
 
-  useEffect(() => {
+  React.useEffect(() => {
     if (conversation && conversation.id) {
       if (!messages.loading) {
         setMessages({
           ...messages,
           ...{
-            loading: true
-          }
+            loading: true,
+          },
         });
 
         (async () => {
@@ -40,8 +55,8 @@ const ThreadContainer = ({
             ...{
               data: res.data.data.reverse(),
               initial: true,
-              loading: false
-            }
+              loading: false,
+            },
           };
 
           setMessages(data);
@@ -61,35 +76,35 @@ const ThreadContainer = ({
       `/conversations/${conversation.id}/messages/?ending_before=${last.id}&limit=${DEFAULT_LIMIT}`
     );
 
-    const latestResults = res.data.data.filter(
-      msg1 => !messages.data.find(msg2 => msg2 === msg1)
+    const latestResults = (res.data.data as types.Message[]).filter(
+      (msg1) => !messages.data.find((msg2) => msg2 === msg1)
     );
 
     const data = {
       ...res.data,
       ...{
-        data: [...latestResults.reverse(), ...messages.data]
+        data: [...latestResults.reverse(), ...messages.data],
       },
-      ...{ finished: latestResults.length < DEFAULT_LIMIT }
+      ...{ finished: latestResults.length < DEFAULT_LIMIT },
     };
 
     setMessages(data);
   };
 
-  const onMessageSubmit = async (values, cb) => {
+  const onMessageSubmit = async (values: types.P, cb: () => void) => {
     let promises;
 
     if (conversation) {
       promises = [
-        api.post(`/users/${conversation.receiver.id}/conversation/`, values)
+        api.post(`/users/${conversation.receiver.id}/conversation/`, values),
       ];
     } else {
-      promises = selectedUsers.map(user =>
+      promises = selectedUsers.map((user) =>
         api.post(`/users/${user.id}/conversation/`, values)
       );
     }
 
-    Promise.all(promises).then(values => {
+    Promise.all(promises).then((values) => {
       const newMessage = values[0].data;
       newMessage.conversation.last_message = newMessage;
 
@@ -98,8 +113,8 @@ const ThreadContainer = ({
       setMessages({
         ...messages,
         ...{
-          data: [...messages.data, newMessage]
-        }
+          data: [...messages.data, newMessage],
+        },
       });
     });
   };
@@ -114,6 +129,4 @@ const ThreadContainer = ({
       <MessageForm focus={messageFormFocus} onSubmit={onMessageSubmit} />
     </>
   );
-};
-
-export default ThreadContainer;
+}
