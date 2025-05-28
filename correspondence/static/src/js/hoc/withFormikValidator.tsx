@@ -1,9 +1,6 @@
 import * as React from "react";
 
-type Error = {
-  msg: string;
-  loc: string[];
-};
+import { Error } from "../types";
 
 type FuncValidator<PROPS> = (
   props: PROPS & { errors?: Error[] }

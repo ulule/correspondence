@@ -1,9 +1,21 @@
-import React from "react";
+import * as React from "react";
 
 import ConversationProfile from "./ConversationProfile";
 import ThreadContainer from "./ThreadContainer";
+import * as types from "../types";
 
-const Conversation = ({
+type ConversationProps = {
+  conversation: types.Conversation;
+  isNew: boolean;
+  onUserUpdate: (ev: types.OnUserUpdateEvent) => void;
+  errors: types.Error[];
+  managers: types.User[];
+  selectedUsers: types.User[];
+  messageFormFocus: boolean;
+  countries: types.Countries;
+};
+
+export default function Conversation({
   conversation,
   isNew,
   onUserUpdate,
@@ -11,14 +23,14 @@ const Conversation = ({
   managers,
   selectedUsers,
   messageFormFocus,
-  countries
-} = props) => {
+  countries,
+}: ConversationProps): React.ReactElement {
   return (
     <div className="conversation__container">
       <div className="conversation__wrapper">
         <ThreadContainer
           conversation={conversation}
-          focus={messageFormFocus}
+          messageFormFocus={messageFormFocus}
           selectedUsers={selectedUsers}
         />
       </div>
@@ -29,11 +41,8 @@ const Conversation = ({
           countries={countries}
           user={conversation && conversation.receiver}
           onSubmit={onUserUpdate}
-          conversation={conversation}
         />
       )}
     </div>
   );
-};
-
-export default Conversation;
+}

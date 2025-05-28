@@ -2,14 +2,16 @@ import axios, { AxiosHeaders, AxiosResponse } from "axios";
 
 axios.defaults.withCredentials = true;
 
+type AxiosResponsePromise = Promise<AxiosResponse<any, any>>
+
 export type Requester = {
-  post: (path: string, data: any) => Promise<AxiosResponse<any, any>>;
-  patch: (path: string, data: any) => Promise<AxiosResponse<any, any>>;
-  get: (path: string) => Promise<AxiosResponse<any, any>>;
+  post: (path: string, data: any) => AxiosResponsePromise;
+  patch: (path: string, data: any) => AxiosResponsePromise;
+  get: (path: string) => AxiosResponsePromise;
 };
 
 const requester = (url: string, headers?: AxiosHeaders): Requester => {
-  const post = (path: string, data: any): Promise<AxiosResponse<any, any>> =>
+  const post = (path: string, data: any): AxiosResponsePromise =>
     axios({
       method: "post",
       url: `${url}${path}`,
@@ -17,7 +19,7 @@ const requester = (url: string, headers?: AxiosHeaders): Requester => {
       data: data,
     });
 
-  const patch = (path: string, data: any): Promise<AxiosResponse<any, any>> =>
+  const patch = (path: string, data: any): AxiosResponsePromise =>
     axios({
       method: "patch",
       url: `${url}${path}`,
@@ -25,7 +27,7 @@ const requester = (url: string, headers?: AxiosHeaders): Requester => {
       data: data,
     });
 
-  const get = (path: string): Promise<AxiosResponse<any, any>> =>
+  const get = (path: string): AxiosResponsePromise =>
     axios({
       method: "get",
       url: `${url}${path}`,

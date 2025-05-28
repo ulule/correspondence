@@ -10,7 +10,7 @@ import UserForm from "./views/UserForm";
 import ConversationWrapper from "./views/ConversationWrapper";
 import sanitize from "./utils/sanitize";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
-import { Conversation, Countries, OnUserCreateEvent, Organization, User } from "./types";
+import { Conversation, Countries, Error, OnUserCreateEvent, Organization, User } from "./types";
 
 type ConversationsProps = {
   authenticatedUser: User;
@@ -23,7 +23,7 @@ type InitialState = {
   conversation: Conversation;
   isNewConversation: boolean;
   isNewUser: boolean;
-  userCreateErrors: any[];
+  userCreateErrors: Error[];
 };
 
 function Conversations({
@@ -91,7 +91,6 @@ function Conversations({
         <UserForm
           errors={userCreateErrors}
           countries={countries}
-          visible={isNewUser}
           managers={managers}
           authenticatedUser={authenticatedUser}
         />

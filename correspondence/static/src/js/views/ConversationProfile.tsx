@@ -1,19 +1,28 @@
-import React, { useState } from "react";
+import * as React from "react";
 import Avatar from "../components/Avatar";
 import SvgActiveCampaign from "../icons/SvgActiveCampaign";
 import UserForm from "./UserForm";
 import classNames from "classnames";
+import { Countries, Error, OnUserUpdateEvent, P, User } from "../types";
 
-const ConversationProfile = ({
+type ConversationProfileProps = {
+  user: User
+  onSubmit: (ev: OnUserUpdateEvent) => void
+  errors: Error[],
+  managers: User[],
+  countries: Countries
+}
+
+export default function ConversationProfile({
   user,
   onSubmit,
   errors,
   managers,
   countries
-} = props) => {
-  const [submit, setSubmit] = useState(false);
+}: ConversationProfileProps): React.ReactElement {
+  const [submit, setSubmit] = React.useState(false);
 
-  const onErrors = values => {
+  const onErrors = (values: P) => {
     setSubmit(false);
   };
 
@@ -69,7 +78,7 @@ const ConversationProfile = ({
                     href={`https://ulule.activehosted.com/app/contacts/${user.active_campaign_id}`}
                     className="has-icon"
                     target="_blank"
-                    re="noopener noreferrer"
+                    rel="noopener noreferrer"
                   >
                     <SvgActiveCampaign className="icon__activecampaign" />
                     <span>Active campaign contact</span>
@@ -83,5 +92,3 @@ const ConversationProfile = ({
     </div>
   );
 };
-
-export default ConversationProfile;

@@ -1,12 +1,13 @@
-import React, { useEffect } from "react";
+import * as React from "react";
 import * as Yup from "yup";
-import { Formik } from "formik";
+import { Formik, FormikState } from "formik";
 import withFormikValidator from "../hoc/withFormikValidator";
+import * as types from "../types";
 
-const filterNulls = obj => {
+const filterNulls = (obj: types.P) => {
   const newObj = { ...obj };
 
-  Object.keys(newObj).forEach(key => {
+  Object.keys(newObj).forEach((key) => {
     if (newObj[key] === null) {
       newObj[key] = "";
     }
@@ -16,32 +17,37 @@ const filterNulls = obj => {
 };
 
 const UserSchema = Yup.object().shape({
-  email: Yup.string()
-    .nullable()
-    .email("Invalid format"),
-  manager_id: Yup.number()
-    .integer()
-    .required("This field is required"),
+  email: Yup.string().nullable().email("Invalid format"),
+  manager_id: Yup.number().integer().required("This field is required"),
   country: Yup.string().required("This field is required"),
-  phone_number: Yup.string().required("This field is required.")
+  phone_number: Yup.string().required("This field is required."),
 });
 
-const UserForm = props => {
-  const {
-    onSubmit,
-    onErrors,
-    submit,
-    formErrors,
-    user,
-    managers,
-    authenticatedUser,
-    countries
-  } = props;
+type UserFormProps = {
+  user?: types.User;
+  onSubmit?: (ev: types.OnUserUpdateEvent) => void;
+  submit?: boolean;
+  onErrors?: (values: types.P) => void;
+  formErrors?: types.P;
+  managers: types.User[]
+  authenticatedUser?: types.User
+  countries: types.Countries
+};
 
-  let formSubmit;
-  let formReset;
+const UserForm = ({
+  onSubmit,
+  onErrors,
+  submit,
+  formErrors,
+  user,
+  managers,
+  authenticatedUser,
+  countries,
+}: UserFormProps): React.ReactElement => {
+  let formSubmit: () => Promise<void>;
+  let formReset: (nextState?: Partial<FormikState<{ body: string }>>) => void;
 
-  useEffect(() => {
+  React.useEffect(() => {
     if (submit) {
       formSubmit().then(() => {
         if (formErrors) {
@@ -51,7 +57,7 @@ const UserForm = props => {
     }
   }, [submit]);
 
-  const userData = filterNulls(user || { manager_id: authenticatedUser.id });
+  const userData = filterNulls(user || { manager_id: authenticatedUser && authenticatedUser.id });
 
   return (
     <Formik
@@ -64,9 +70,9 @@ const UserForm = props => {
         onSubmit({
           values: values,
           onSuccess: () => {
-            Object.keys(values).forEach(key => (values[key] = ""));
+            Object.keys(values).forEach((key) => (values[key] = ""));
             formReset(values);
-          }
+          },
         });
       }}
     >
@@ -79,7 +85,7 @@ const UserForm = props => {
         handleSubmit,
         isSubmitting,
         submitForm,
-        resetForm
+        resetForm,
       }) => {
         formSubmit = submitForm;
         formReset = resetForm;
@@ -98,7 +104,7 @@ const UserForm = props => {
                       value={values.manager_id}
                     >
                       <option>Select manager</option>
-                      {managers.map(manager => (
+                      {managers.map((manager) => (
                         <option
                           key={`manager-${manager.id}`}
                           value={manager.id}
@@ -108,7 +114,7 @@ const UserForm = props => {
                       ))}
                     </select>
                     {errors.manager_id && (
-                      <p className="help is-danger">{errors.manager_id}</p>
+                      <p className="help is-danger">{errors.manager_id as string}</p>
                     )}
                     {formErrors.manager_id && (
                       <p className="help is-danger">{formErrors.manager_id}</p>
@@ -127,14 +133,14 @@ const UserForm = props => {
                       value={values.country}
                     >
                       <option>Select country</option>
-                      {countries.map(entry => (
+                      {countries.map((entry) => (
                         <option key={`country-${entry[0]}`} value={entry[0]}>
                           {entry[1]}
                         </option>
                       ))}
                     </select>
                     {errors.country && (
-                      <p className="help is-danger">{errors.country}</p>
+                      <p className="help is-danger">{errors.country as string}</p>
                     )}
                     {formErrors.country && (
                       <p className="help is-danger">{formErrors.country}</p>
@@ -157,7 +163,7 @@ const UserForm = props => {
                     <i className="fas fa-envelope"></i>
                   </span>
                   {errors.email && (
-                    <p className="help is-danger">{errors.email}</p>
+                    <p className="help is-danger">{errors.email as string}</p>
                   )}
                   {formErrors.email && (
                     <p className="help is-danger">{formErrors.email}</p>
@@ -179,7 +185,7 @@ const UserForm = props => {
                     <i className="fas fa-user"></i>
                   </span>
                   {errors.first_name && (
-                    <p className="help is-danger">{errors.first_name}</p>
+                    <p className="help is-danger">{errors.first_name as string}</p>
                   )}
                 </p>
               </div>
@@ -198,7 +204,7 @@ const UserForm = props => {
                     <i className="fas fa-user"></i>
                   </span>
                   {errors.last_name && (
-                    <p className="help is-danger">{errors.last_name}</p>
+                    <p className="help is-danger">{errors.last_name as string}</p>
                   )}
                 </p>
               </div>
@@ -212,13 +218,13 @@ const UserForm = props => {
                     onChange={handleChange}
                     onBlur={handleBlur}
                     value={values.phone_number}
-                    disabled={user && user.phone_number}
+                    disabled={!!(user && user.phone_number)}
                   />
                   <span className="icon is-small is-left">
                     <i className="fas fa-phone"></i>
                   </span>
                   {errors.phone_number && (
-                    <p className="help is-danger">{errors.phone_number}</p>
+                    <p className="help is-danger">{errors.phone_number as string}</p>
                   )}
                   {formErrors.phone_number && (
                     <p className="help is-danger">{formErrors.phone_number}</p>
@@ -241,7 +247,7 @@ const UserForm = props => {
                   </span>
                   {errors.active_campaign_id && (
                     <p className="help is-danger">
-                      {errors.active_campaign_id}
+                      {errors.active_campaign_id as string}
                     </p>
                   )}
                   {formErrors.active_campaign_id && (
@@ -259,4 +265,4 @@ const UserForm = props => {
   );
 };
 
-export default withFormikValidator(UserForm);
+export default withFormikValidator<UserFormProps, types.Error[]>(UserForm);

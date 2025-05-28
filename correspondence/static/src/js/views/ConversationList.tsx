@@ -1,28 +1,46 @@
-import React, { useRef, useEffect, useState } from "react";
+import * as React from "react";
 import ConversationItem from "./ConversationItem";
 import classNames from "classnames";
 import api from "../api";
+import { Conversation, Organization, PageMeta, User } from "../types";
 
-const ConversationList = ({
+type ConversationListProps = {
+  conversation: Conversation;
+  onNewClick: () => void;
+  isNew: boolean;
+  authenticatedUser: User;
+  organization: Organization;
+};
+
+type State = {
+  data: Conversation[];
+  managerId: number | null;
+  loading: boolean;
+  initial: boolean;
+  meta: PageMeta;
+};
+
+export default function ConversationList({
   conversation,
   onNewClick,
   isNew,
   authenticatedUser,
   organization,
-} = props) => {
-  const [conversations, setConversations] = useState({
+}: ConversationListProps): React.ReactElement {
+  const initialState: State = {
     data: [],
     managerId: null,
     loading: true,
     initial: true,
     meta: { count: 0, next: null, total: 0, offset: 0 },
-  });
+  };
+  const [conversations, setConversations] = React.useState<State>(initialState);
 
   const filters = [
     {
       label: "All conversations",
       onClick: () => {
-        loadConversations();
+        loadConversations({});
       },
       isActive: !conversations.managerId,
       key: "all-conversations",
@@ -37,14 +55,14 @@ const ConversationList = ({
     },
   ];
 
-  const conversationsEndRef = useRef(null);
+  const conversationsEndRef = React.useRef(null);
 
   const onScroll = async () => {
     if (conversations.meta.next === null) {
       return;
     }
 
-    const offset = parseInt(conversations.meta.offset || 0, 10) + 20;
+    const offset = conversations.meta.offset + 20;
 
     let url = `/organizations/${organization.slug}/conversations/?offset=${offset}&limit=20`;
 
@@ -75,7 +93,7 @@ const ConversationList = ({
     }
   };
 
-  const loadConversations = async (props = {}) => {
+  const loadConversations = async ({ managerId }: { managerId?: number }) => {
     setConversations({
       ...conversations,
       ...{ initial: false, loading: true },
@@ -83,10 +101,8 @@ const ConversationList = ({
 
     let url = `/organizations/${organization.slug}/conversations/`;
 
-    const { managerId } = props;
-
     if (managerId) {
-      url = `${url}?manager_id=${props.managerId}`;
+      url = `${url}?manager_id=${managerId}`;
     }
 
     const res = await api.get(url);
@@ -101,19 +117,19 @@ const ConversationList = ({
     });
   };
 
-  useEffect(() => {
+  React.useEffect(() => {
     if (!conversations.initial) {
       return;
     }
 
-    loadConversations();
+    loadConversations({});
   });
 
   if (conversation) {
     let conversationList = conversations.data;
 
     const index = conversations.data.findIndex(
-      (conv) => conv.receiver.id == conversation.receiver.id,
+      (conv) => conv.receiver.id == conversation.receiver.id
     );
 
     if (index === -1) {
@@ -196,6 +212,4 @@ const ConversationList = ({
       )}
     </aside>
   );
-};
-
-export default ConversationList;
+}

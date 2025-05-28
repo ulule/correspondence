@@ -9,10 +9,10 @@ const DEFAULT_LIMIT = 20;
 type ThreadContainerProps = {
   conversation: types.Conversation;
   selectedUsers: types.User[];
-  messageFormFocus: () => void;
+  messageFormFocus: boolean;
 };
 
-type InitialState = {
+type State = {
   data: types.Message[];
   initial: boolean;
   loading: boolean;
@@ -25,7 +25,7 @@ export default function ThreadContainer({
   messageFormFocus,
   selectedUsers,
 }: ThreadContainerProps): React.ReactElement {
-  const initialState: InitialState = {
+  const initialState: State = {
     data: [],
     initial: true,
     loading: false,
@@ -33,7 +33,7 @@ export default function ThreadContainer({
     meta: { count: 0, next: null, total: 0 },
   };
 
-  const [messages, setMessages] = React.useState<InitialState>(initialState);
+  const [messages, setMessages] = React.useState<State>(initialState);
 
   React.useEffect(() => {
     if (conversation && conversation.id) {

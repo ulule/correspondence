@@ -1,12 +1,24 @@
-import React from "react";
+import * as React from "react";
 import Conversation from "./Conversation";
 import UserList from "./UserList";
 import classNames from "classnames";
+import * as types from "../types";
 
-const ConversationContainer = ({
+type ConversationContainerProps = {
+  conversation: types.Conversation;
+  isNew: boolean;
+  onSearchAdd: (user: types.User) => void;
+  onSearchRemove: (user: types.User) => void;
+  onAction: (action: string) => void;
+  errors: types.Error[];
+  managers: types.User[];
+  onUserUpdate: (ev: types.OnUserUpdateEvent) => void;
+  selectedUsers: types.User[];
+  countries: types.Countries;
+};
+
+export default function ConversationContainer({
   conversation,
-  onFocus,
-  users,
   isNew,
   onSearchAdd,
   onSearchRemove,
@@ -15,8 +27,8 @@ const ConversationContainer = ({
   managers,
   onUserUpdate,
   selectedUsers,
-  countries
-} = props) => {
+  countries,
+}: ConversationContainerProps): React.ReactElement {
   const showConversation = conversation || selectedUsers.length > 0;
 
   return (
@@ -34,7 +46,6 @@ const ConversationContainer = ({
           )}
           {isNew && (
             <UserList
-              users={users}
               onUserAdd={onSearchAdd}
               onUserRemove={onSearchRemove}
               selectedUsers={selectedUsers}
@@ -72,8 +83,8 @@ const ConversationContainer = ({
       {showConversation && (
         <Conversation
           conversation={conversation}
-          onFocus={onFocus}
           onUserUpdate={onUserUpdate}
+          isNew={isNew}
           errors={errors}
           managers={managers}
           countries={countries}
@@ -83,6 +94,4 @@ const ConversationContainer = ({
       )}
     </div>
   );
-};
-
-export default ConversationContainer;
+}

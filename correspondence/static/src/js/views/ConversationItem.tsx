@@ -8,7 +8,7 @@ type ConversationItemProps = {
   conversation: Conversation;
 };
 
-export function ConversationItem({
+export default function ConversationItem({
   conversation,
 }: ConversationItemProps): React.ReactElement {
   const { receiver, last_message } = conversation;

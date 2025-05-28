@@ -52,12 +52,25 @@ export type OnUserCreateEvent = {
   onSuccess?: () => void;
 };
 
+export type OnUserUpdateEvent = {
+  values: Values;
+  onSuccess?: () => void;
+};
+
+
 export type PageMeta = {
   count: number;
   next: string | null;
   total: number;
+  offset?: number
 };
 
 export type P = {
   [key: string]: any;
+};
+
+
+export type Error = {
+  msg: string;
+  loc: string[];
 };
