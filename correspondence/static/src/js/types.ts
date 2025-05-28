@@ -69,6 +69,10 @@ export type P = {
   [key: string]: any;
 };
 
+export type FormData = {
+  [key: string]: string;
+};
+
 
 export type Error = {
   msg: string;
