@@ -4,7 +4,7 @@ from sqlalchemy.orm.strategy_options import selectinload
 
 from correspondence.db.deps import get_db_asession
 from correspondence.db.engine import AsyncSession
-from correspondence.models import AutoMessage, Conversation, Organization, User
+from correspondence.models import AutoMessage, Conversation, Organization, User, Message
 
 
 async def get_organization_by_slug(
@@ -28,8 +28,8 @@ async def get_conversation_by_id(
     return await Conversation.repository(asession).aget_or_404(
         conversation_id,
         options=[
-            joinedload(Conversation.receiver),
-            joinedload(Conversation.last_message),
+            joinedload(Conversation.receiver).joinedload(User.manager),
+            joinedload(Conversation.last_message).joinedload(Message.sender),
         ],
     )
 

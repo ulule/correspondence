@@ -30,7 +30,7 @@ async def root(
 
         return RedirectResponse(
             url=request.url_for(
-                "organization_detail", organization_slug=organization.slug
+                "organization_detail", organization_slug=organization.slug, rest=""
             )
         )
 

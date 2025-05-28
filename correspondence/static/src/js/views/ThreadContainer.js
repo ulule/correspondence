@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
 import api from "../api";
-import MessageModel from "../models/MessageModel";
 import Thread from "./Thread";
 import MessageForm from "./MessageForm";
+
+const DEFAULT_LIMIT = 20;
 
 const ThreadContainer = ({
   conversation,
@@ -13,6 +14,7 @@ const ThreadContainer = ({
     data: [],
     initial: true,
     loading: false,
+    finished: false,
     meta: { count: 0, next: null, total: 0 }
   };
 
@@ -29,12 +31,14 @@ const ThreadContainer = ({
         });
 
         (async () => {
-          const res = await api.get(conversation.api.messagesUrl);
+          const res = await api.get(
+            `/conversations/${conversation.id}/messages/`
+          );
 
           const data = {
             ...res.data,
             ...{
-              data: res.data.data.map(entry => MessageModel(entry)).reverse(),
+              data: res.data.data.reverse(),
               initial: true,
               loading: false
             }
@@ -49,22 +53,24 @@ const ThreadContainer = ({
   }, [conversation && conversation.id]);
 
   const onThreadScroll = async () => {
-    if (messages.meta.next === null) {
+    if (messages.data.length == 0 || messages.finished) {
       return;
     }
     const last = messages.data[0];
     const res = await api.get(
-      `${conversation.api.messagesUrl}?ending_before=${last.id}`
+      `/conversations/${conversation.id}/messages/?ending_before=${last.id}&limit=${DEFAULT_LIMIT}`
+    );
+
+    const latestResults = res.data.data.filter(
+      msg1 => !messages.data.find(msg2 => msg2 === msg1)
     );
 
     const data = {
       ...res.data,
       ...{
-        data: [
-          ...res.data.data.map(entry => MessageModel(entry)).reverse(),
-          ...messages.data
-        ]
-      }
+        data: [...latestResults.reverse(), ...messages.data]
+      },
+      ...{ finished: latestResults.length < DEFAULT_LIMIT }
     };
 
     setMessages(data);
@@ -74,7 +80,9 @@ const ThreadContainer = ({
     let promises;
 
     if (conversation) {
-      promises = [api.post(conversation.api.detailUrl, values)];
+      promises = [
+        api.post(`/users/${conversation.receiver.id}/conversation/`, values)
+      ];
     } else {
       promises = selectedUsers.map(user =>
         api.post(`/users/${user.id}/conversation/`, values)
@@ -82,7 +90,7 @@ const ThreadContainer = ({
     }
 
     Promise.all(promises).then(values => {
-      const newMessage = MessageModel(values[0].data);
+      const newMessage = values[0].data;
       newMessage.conversation.last_message = newMessage;
 
       cb();

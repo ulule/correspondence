@@ -104,7 +104,7 @@ async def test_root(
     assert response.status_code == status.HTTP_307_TEMPORARY_REDIRECT
     assert (
         response.headers["location"]
-        == f"{aclient.base_url}/organizations/{default_organization.slug}"
+        == f"{aclient.base_url}/organizations/{default_organization.slug}/"
     )
 
     response = await aclient.get(
@@ -114,7 +114,7 @@ async def test_root(
     assert response.status_code == status.HTTP_307_TEMPORARY_REDIRECT
     assert (
         response.headers["location"]
-        == f"{aclient.base_url}/organizations/{default_organization.slug}"
+        == f"{aclient.base_url}/organizations/{default_organization.slug}/"
     )
 
 
@@ -122,7 +122,7 @@ async def test_root(
 async def test_organization_detail(
     aclient: AsyncClient, default_organization: Organization, default_user: User
 ):
-    url = f"/organizations/{default_organization.slug}"
+    url = f"/organizations/{default_organization.slug}/"
     response = await aclient.get(url)
     assert response.status_code == status.HTTP_403_FORBIDDEN
 

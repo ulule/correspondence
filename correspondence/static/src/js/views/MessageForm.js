@@ -4,7 +4,7 @@ import classNames from "classnames";
 import * as Yup from "yup";
 
 const MessageSchema = Yup.object().shape({
-  body: Yup.string().required("This field is required.")
+  body: Yup.string().required("This field is required."),
 });
 
 const DEFAULT_MAX_LENGTH = 160;
@@ -12,14 +12,14 @@ const DEFAULT_MAX_LENGTH = 160;
 const MessageForm = ({
   onSubmit,
   focus,
-  maxLength = DEFAULT_MAX_LENGTH
+  maxLength = DEFAULT_MAX_LENGTH,
 } = props) => {
   let formSubmit;
   let formReset;
 
   const bodyFieldRef = useRef(null);
 
-  const handleKeydown = e => {
+  const handleKeydown = (e) => {
     // Handle cmd+enter & ctrl+enter
     if (e.keyCode === 13 && (e.metaKey || e.ctrlKey) && formSubmit) {
       formSubmit();
@@ -39,6 +39,7 @@ const MessageForm = ({
 
   return (
     <Formik
+      initialValues={{ body: "" }}
       validationSchema={MessageSchema}
       validateOnBlur={false}
       validateOnChange={false}
@@ -57,7 +58,7 @@ const MessageForm = ({
         handleBlur,
         handleSubmit,
         isSubmitting,
-        resetForm
+        resetForm,
       }) => {
         formSubmit = handleSubmit;
         formReset = resetForm;
@@ -68,20 +69,19 @@ const MessageForm = ({
                 <div
                   className={classNames({
                     control: true,
-                    "is-loading": isSubmitting
+                    "is-loading": isSubmitting,
                   })}
                 >
                   <textarea
                     name="body"
                     className={classNames({
                       textarea: true,
-                      "is-danger": errors.body
+                      "is-danger": errors.body,
                     })}
                     placeholder="Message..."
                     onChange={handleChange}
                     onBlur={handleBlur}
                     value={values && values.body}
-                    ref={bodyFieldRef}
                   ></textarea>
                   {errors.body && (
                     <p className="help is-danger">{errors.body}</p>
@@ -94,7 +94,7 @@ const MessageForm = ({
                   <div
                     className={classNames("countdown", {
                       "countdown--danger":
-                        values && values.body && values.body.length > maxLength
+                        values && values.body && values.body.length > maxLength,
                     })}
                   >
                     {(values && values.body && values.body.length) || 0}/
@@ -104,7 +104,7 @@ const MessageForm = ({
                 <div
                   className={classNames({
                     control: true,
-                    "is-loading": isSubmitting
+                    "is-loading": isSubmitting,
                   })}
                 >
                   <button

@@ -2,11 +2,10 @@ import React, { useState, useEffect, useRef } from "react";
 import ConversationList from "./ConversationList";
 import ConversationContainer from "./ConversationContainer";
 import api from "../api";
-import ConversationModel from "../models/ConversationModel";
 import sanitize from "../utils/sanitize";
 import { useParams } from "react-router";
 
-const usePrevious = value => {
+const usePrevious = (value) => {
   const ref = useRef();
   useEffect(() => {
     ref.current = value;
@@ -14,9 +13,9 @@ const usePrevious = value => {
   return ref.current;
 };
 
-const loadConversation = async conversationId => {
+const loadConversation = async (conversationId) => {
   let res = await api.get(`/users/${conversationId}/conversation`);
-  return ConversationModel(res.data);
+  return res.data;
 };
 
 const ConversationWrapper = ({
@@ -24,20 +23,20 @@ const ConversationWrapper = ({
   history,
   managers,
   organization,
-  countries
+  countries,
 } = props) => {
   const initialState = {
     conversation: null,
     isNew: false,
     selectedUsers: [],
-    userUpdateErrors: []
+    userUpdateErrors: [],
   };
 
   const [state, setState] = useState(initialState);
 
   const { isNew, conversation, selectedUsers, userUpdateErrors } = state;
 
-  const onUserUpdate = async props => {
+  const onUserUpdate = async (props) => {
     try {
       const values = sanitize(props.values);
       const res = await api.patch(`/users/${conversation.receiver.id}/`, {
@@ -47,37 +46,37 @@ const ConversationWrapper = ({
         email: values.email,
         phone_number: values.phone_number,
         manager_id: values.manager_id,
-        country: values.country
+        country: values.country,
       });
 
       const conv = { ...conversation, ...{ receiver: res.data } };
 
       setState({
         ...state,
-        ...{ conversation: conv }
+        ...{ conversation: conv },
       });
     } catch (e) {
       setState({
         ...state,
-        ...{ userUpdateErrors: e.response.data?.detail }
+        ...{ userUpdateErrors: e.response.data?.detail },
       });
     }
   };
 
-  const onConversationAction = async action => {
+  const onConversationAction = async (action) => {
     const res = await api.post(`/conversations/${conversation.id}/${action}/`);
-    const conv = ConversationModel(res.data);
+    const conv = res.data;
 
     setState({
       ...state,
-      ...{ conversation: conv }
+      ...{ conversation: conv },
     });
   };
 
   const onNewConversation = () => {
     setState({
       ...state,
-      ...{ isNew: !isNew, selectedUsers: [] }
+      ...{ isNew: !isNew, selectedUsers: [] },
     });
 
     history.push("/conversations");
@@ -91,14 +90,14 @@ const ConversationWrapper = ({
       ...{
         conversation: conv,
         isNew: false,
-        userUpdateErrors: []
+        userUpdateErrors: [],
       },
-      ...props
+      ...props,
     });
   };
 
-  const onUserAdd = user => {
-    const index = selectedUsers.findIndex(cur => cur.id == user.id);
+  const onUserAdd = (user) => {
+    const index = selectedUsers.findIndex((cur) => cur.id == user.id);
 
     if (index === -1) {
       const newSelectedUsers = [...selectedUsers, user];
@@ -106,7 +105,7 @@ const ConversationWrapper = ({
       if (newSelectedUsers.length === 1) {
         onConversationFocus(newSelectedUsers[0].id, {
           selectedUsers: newSelectedUsers,
-          isNew: true
+          isNew: true,
         });
       } else {
         setState({
@@ -115,19 +114,19 @@ const ConversationWrapper = ({
             conversation: null,
             isNew: true,
             userUpdateErrors: [],
-            selectedUsers: newSelectedUsers
-          }
+            selectedUsers: newSelectedUsers,
+          },
         });
       }
     }
   };
 
-  const onUserRemove = user => {
+  const onUserRemove = (user) => {
     setState({
       ...state,
       ...{
-        selectedUsers: selectedUsers.filter(cur => cur.id != user.id)
-      }
+        selectedUsers: selectedUsers.filter((cur) => cur.id != user.id),
+      },
     });
   };
 

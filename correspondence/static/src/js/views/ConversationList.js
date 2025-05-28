@@ -1,7 +1,6 @@
 import React, { useRef, useEffect, useState } from "react";
 import ConversationItem from "./ConversationItem";
 import classNames from "classnames";
-import ConversationModel from "../models/ConversationModel";
 import api from "../api";
 
 const ConversationList = ({
@@ -9,14 +8,14 @@ const ConversationList = ({
   onNewClick,
   isNew,
   authenticatedUser,
-  organization
+  organization,
 } = props) => {
   const [conversations, setConversations] = useState({
     data: [],
     managerId: null,
     loading: true,
     initial: true,
-    meta: { count: 0, next: null, total: 0, offset: 0 }
+    meta: { count: 0, next: null, total: 0, offset: 0 },
   });
 
   const filters = [
@@ -26,7 +25,7 @@ const ConversationList = ({
         loadConversations();
       },
       isActive: !conversations.managerId,
-      key: "all-conversations"
+      key: "all-conversations",
     },
     {
       label: "My conversations",
@@ -34,8 +33,8 @@ const ConversationList = ({
         loadConversations({ managerId: authenticatedUser.id });
       },
       isActive: conversations.managerId,
-      key: "my-conversations"
-    }
+      key: "my-conversations",
+    },
   ];
 
   const conversationsEndRef = useRef(null);
@@ -62,11 +61,9 @@ const ConversationList = ({
     setConversations({
       ...data,
       ...{
-        data: [...conversations.data, ...data.data].map(conv =>
-          ConversationModel(conv)
-        ),
-        managerId: managerId
-      }
+        data: [...conversations.data, ...data.data],
+        managerId: managerId,
+      },
     });
   };
 
@@ -81,7 +78,7 @@ const ConversationList = ({
   const loadConversations = async (props = {}) => {
     setConversations({
       ...conversations,
-      ...{ initial: false, loading: true }
+      ...{ initial: false, loading: true },
     });
 
     let url = `/organizations/${organization.slug}/conversations/`;
@@ -98,9 +95,9 @@ const ConversationList = ({
     setConversations({
       ...data,
       ...{
-        data: data.data.map(conv => ConversationModel(conv)),
-        managerId: managerId
-      }
+        data: data.data,
+        managerId: managerId,
+      },
     });
   };
 
@@ -116,7 +113,7 @@ const ConversationList = ({
     let conversationList = conversations.data;
 
     const index = conversations.data.findIndex(
-      conv => conv.receiver.id == conversation.receiver.id
+      (conv) => conv.receiver.id == conversation.receiver.id,
     );
 
     if (index === -1) {
@@ -158,7 +155,7 @@ const ConversationList = ({
       </div>
       <div className="tabs is-centered">
         <ul>
-          {filters.map(filter => {
+          {filters.map((filter) => {
             return (
               <li
                 key={filter.key}
@@ -176,12 +173,12 @@ const ConversationList = ({
           onScroll={handleScroll}
           ref={conversationsEndRef}
         >
-          {conversations.data.map(conv => {
+          {conversations.data.map((conv) => {
             const klass = classNames({
               conversation__item: true,
               "conversation__item--active":
                 conversation && conversation.id == conv.id,
-              "conversation__item--unread": conv.unread
+              "conversation__item--unread": conv.unread,
             });
 
             return (
