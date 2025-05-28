@@ -1,10 +1,16 @@
-import React from "react";
-import formatDistanceToNow from "date-fns/formatDistanceToNow";
-import parseISO from "date-fns/parseISO";
+import * as React from "react";
+import { parseISO, formatDistanceToNow } from "date-fns";
 import Avatar from "../components/Avatar";
 import { Link, useParams } from "react-router-dom";
+import { Conversation } from "../types";
 
-const ConversationItem = ({ conversation } = props) => {
+type ConversationItemProps = {
+  conversation: Conversation;
+};
+
+export function ConversationItem({
+  conversation,
+}: ConversationItemProps): React.ReactElement {
   const { receiver, last_message } = conversation;
 
   let createdAt;
@@ -46,6 +52,4 @@ const ConversationItem = ({ conversation } = props) => {
       </div>
     </Link>
   );
-};
-
-export default ConversationItem;
+}

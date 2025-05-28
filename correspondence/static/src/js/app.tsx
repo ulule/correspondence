@@ -1,8 +1,8 @@
 import "@fortawesome/fontawesome-free/js/all";
-import ReactDOM from "react-dom/client";
+import * as ReactDOM from "react-dom/client";
+import * as React from "react";
 
-import PropTypes from "prop-types";
-import React, { useState } from "react";
+import { useState } from "react";
 import api from "./api";
 import Navbar from "./views/Navbar";
 import Modal from "./components/Modal";
@@ -10,27 +10,40 @@ import UserForm from "./views/UserForm";
 import ConversationWrapper from "./views/ConversationWrapper";
 import sanitize from "./utils/sanitize";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { Conversation, Countries, OnUserCreateEvent, Organization, User } from "./types";
 
-const Conversations = ({
+type ConversationsProps = {
+  authenticatedUser: User;
+  managers: User[];
+  organization: Organization;
+  countries: Countries;
+};
+
+type InitialState = {
+  conversation: Conversation;
+  isNewConversation: boolean;
+  isNewUser: boolean;
+  userCreateErrors: any[];
+};
+
+function Conversations({
   authenticatedUser,
   managers,
   organization,
-  countries
-} = props) => {
-  const initialState = {
+  countries,
+}: ConversationsProps): React.ReactElement {
+  const initialState: InitialState = {
     conversation: null,
     isNewConversation: false,
     isNewUser: false,
-    userCreateErrors: []
+    userCreateErrors: [],
   };
 
-  let history;
-
-  const [state, setState] = useState(initialState);
+  const [state, setState] = useState<InitialState>(initialState);
 
   const { isNewUser, userCreateErrors } = state;
 
-  const onUserCreate = async props => {
+  const onUserCreate = async (props: OnUserCreateEvent) => {
     try {
       const values = sanitize(props.values);
       const res = await api.post(
@@ -40,18 +53,16 @@ const Conversations = ({
 
       setState({
         ...state,
-        ...{ isNewUser: false }
+        ...{ isNewUser: false },
       });
 
-      history.push(`/conversations/${res.data.id}`);
-
-      if (props.onSuccess && typeof props.onSuccess === "function") {
+      if (props.onSuccess) {
         props.onSuccess();
       }
     } catch (e) {
       setState({
         ...state,
-        ...{ userCreateErrors: e.response.data.detail }
+        ...{ userCreateErrors: e.response.data.detail },
       });
     }
   };
@@ -62,7 +73,7 @@ const Conversations = ({
         onUserCreateBtnClick={() => {
           setState({
             ...state,
-            ...{ isNewUser: true, userCreateErrors: [] }
+            ...{ isNewUser: true, userCreateErrors: [] },
           });
         }}
       />
@@ -70,7 +81,7 @@ const Conversations = ({
         onCloseClick={() => {
           setState({
             ...state,
-            ...{ isNewUser: false }
+            ...{ isNewUser: false },
           });
         }}
         visible={isNewUser}
@@ -90,7 +101,6 @@ const Conversations = ({
         <Routes>
           <Route
             path="/organizations/:slug/conversations?"
-            exact
             element={
               <ConversationWrapper
                 organization={organization}
@@ -102,7 +112,6 @@ const Conversations = ({
           />
           <Route
             path="/organizations/:slug/conversations/:id"
-            exact
             element={
               <ConversationWrapper
                 organization={organization}
@@ -116,19 +125,25 @@ const Conversations = ({
       </BrowserRouter>
     </div>
   );
-};
+}
 
-Conversations.propTypes = {
-  authenticatedUser: PropTypes.any.isRequired,
-  countries: PropTypes.any.isRequired,
-  organization: PropTypes.any.isRequired,
-  managers: PropTypes.arrayOf(PropTypes.any).isRequired
-};
+declare global {
+  interface Window {
+    CDE: {
+      api: {
+        url: string;
+      };
+      authenticatedUser: User;
+      organization: Organization;
+      countries: Countries;
+    };
+  }
+}
 
-const loadManagers = async () => {
+async function loadManagers(): Promise<User[]> {
   const res = await api.get(`/users/?is_staff=1`);
-  return res.data;
-};
+  return res.data.data;
+}
 
 window.addEventListener("DOMContentLoaded", () => {
   (async () => {
@@ -137,7 +152,7 @@ window.addEventListener("DOMContentLoaded", () => {
     const { organization, countries } = window.CDE;
 
     const supportedCountries = countries.filter(
-      entry => organization.supported_countries.indexOf(entry[0]) !== -1
+      (entry) => organization.supported_countries.indexOf(entry[0]) !== -1
     );
 
     const root = ReactDOM.createRoot(
@@ -149,7 +164,7 @@ window.addEventListener("DOMContentLoaded", () => {
         authenticatedUser={window.CDE.authenticatedUser}
         organization={organization}
         countries={supportedCountries}
-        managers={managers.data}
+        managers={managers}
       />
     );
   })();

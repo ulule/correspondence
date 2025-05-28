@@ -1,12 +1,24 @@
-import React, { useRef, useEffect } from "react";
+import * as React from "react";
 import Message from "./Message";
 import classNames from "classnames";
+import * as types from "../types"
 
-const Thread = ({ conversation, messages, onScroll } = props) => {
-  const messagesEndRef = useRef(null);
+type ThreadProps = {
+  conversation: types.Conversation
+  messages: MessagePage
+  onScroll: () => void
+}
+
+type MessagePage = {
+  data: types.Message[]
+  initial: boolean
+}
+
+export default function Thread({ conversation, messages, onScroll }: ThreadProps): React.ReactElement {
+  const messagesEndRef = React.useRef(null);
 
   // keep the scroll position on scroll to the top
-  useEffect(() => {
+  React.useEffect(() => {
     if (!messages.initial) {
       return;
     }
@@ -45,5 +57,3 @@ const Thread = ({ conversation, messages, onScroll } = props) => {
     </div>
   );
 };
-
-export default Thread;

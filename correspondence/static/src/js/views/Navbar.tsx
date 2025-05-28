@@ -1,6 +1,12 @@
-import React from "react";
+import * as React from "react";
 
-const Navbar = ({ onUserCreateBtnClick } = props) => {
+type NavbarProps = {
+  onUserCreateBtnClick: () => void;
+};
+
+export default function Navbar({
+  onUserCreateBtnClick,
+}: NavbarProps): React.ReactElement {
   return (
     <nav
       className="navbar conversations__header"
@@ -28,6 +34,4 @@ const Navbar = ({ onUserCreateBtnClick } = props) => {
       </div>
     </nav>
   );
-};
-
-export default Navbar;
+}

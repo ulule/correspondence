@@ -1,28 +1,47 @@
-import React, { useState, useEffect } from "react";
+import * as React from "react";
 import classNames from "classnames";
+import { OnUserCreateEvent } from "../types";
 
-const Modal = props => {
-  const { visible = false, onCloseClick, title, onSave } = props;
+type ModalChildProps = {
+  onSubmit: (props: OnUserCreateEvent) => void
+  submit: boolean
+  onErrors: () => void
+}
 
-  const [submit, setSubmit] = useState(false);
+type ModalProps = {
+  visible: boolean;
+  onCloseClick: () => void;
+  title: string;
+  onSave: (props: OnUserCreateEvent) => void | Promise<void>;
+  children: React.ReactElement<ModalChildProps>;
+};
 
-  const onSubmit = props => {
+export default function Modal({
+  visible,
+  onCloseClick,
+  title,
+  onSave,
+  children,
+}: ModalProps): React.ReactElement {
+  const [submit, setSubmit] = React.useState(false);
+
+  const onSubmit = ({ onSuccess, ...props }: OnUserCreateEvent) => {
     onSave({
       ...props,
       onSuccess: () => {
         setSubmit(false);
 
-        if (props.onSuccess && typeof props.onSuccess === "function") {
-          props.onSuccess();
+        if (onSuccess) {
+          onSuccess();
         }
-      }
+      },
     });
   };
 
-  useEffect(() => {
-    const handleKeydown = evt => {
+  React.useEffect(() => {
+    const handleKeydown = (evt: KeyboardEvent) => {
       // handle ESC key
-      if (evt.keyCode === 27) {
+      if (evt.key === "Escape") {
         onCloseClick();
       }
     };
@@ -34,7 +53,7 @@ const Modal = props => {
     };
   });
 
-  const onErrors = values => {
+  const onErrors = () => {
     setSubmit(false);
   };
 
@@ -42,7 +61,7 @@ const Modal = props => {
     <div
       className={classNames({
         modal: true,
-        "is-active": visible
+        "is-active": visible,
       })}
     >
       <div className="modal-background"></div>
@@ -56,14 +75,14 @@ const Modal = props => {
           ></button>
         </header>
         <section className="modal-card-body">
-          {React.cloneElement(props.children, { onSubmit, submit, onErrors })}
+          {React.cloneElement(children as React.ReactElement<ModalChildProps>, { onSubmit, submit, onErrors })}
         </section>
         <footer className="modal-card-foot">
           <button
             className={classNames({
               button: true,
               "is-success": true,
-              "is-loading": submit
+              "is-loading": submit,
             })}
             onClick={() => {
               setSubmit(true);
@@ -78,6 +97,4 @@ const Modal = props => {
       </div>
     </div>
   );
-};
-
-export default Modal;
+}

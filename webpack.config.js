@@ -9,12 +9,14 @@ const source = path.resolve(__dirname, "./correspondence/static/src");
 const dest = path.resolve(__dirname, "./correspondence/static/build");
 
 let plugins = [
-  new CopyPlugin({patterns: [
-    {
-      from: source + "/img/",
-      to: dest + "/img/",
-    },
-  ]}),
+  new CopyPlugin({
+    patterns: [
+      {
+        from: source + "/img/",
+        to: dest + "/img/",
+      },
+    ],
+  }),
   new CleanWebpackPlugin({
     cleanAfterEveryBuildPatterns: ["dist"],
   }),
@@ -31,8 +33,9 @@ module.exports = {
   optimization: {
     minimize: true,
   },
+  devtool: "inline-source-map",
   entry: {
-    app: [source + "/js/app.js"],
+    app: [source + "/js/app.tsx"],
     main: [source + "/css/main.scss"],
     admin: [source + "/css/admin.scss"],
   },
@@ -40,8 +43,16 @@ module.exports = {
     path: dest,
     filename: "js/[name].js",
   },
+  resolve: {
+    extensions: [".tsx", ".ts", ".js", ".css", "scss"],
+  },
   module: {
     rules: [
+      {
+        test: /\.tsx?$/,
+        use: "ts-loader",
+        exclude: /node_modules/,
+      },
       {
         test: /\.(js|jsx)$/,
         exclude: /node_modules/,

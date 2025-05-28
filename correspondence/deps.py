@@ -4,7 +4,8 @@ from sqlalchemy.orm.strategy_options import selectinload
 
 from correspondence.db.deps import get_db_asession
 from correspondence.db.engine import AsyncSession
-from correspondence.models import AutoMessage, Conversation, Organization, User, Message
+from correspondence.models import (AutoMessage, Conversation, Message,
+                                   Organization, User)
 
 
 async def get_organization_by_slug(
