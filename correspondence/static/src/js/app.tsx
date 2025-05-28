@@ -19,7 +19,7 @@ type ConversationsProps = {
   countries: Countries;
 };
 
-type InitialState = {
+type State = {
   conversation: Conversation;
   isNewConversation: boolean;
   isNewUser: boolean;
@@ -32,14 +32,14 @@ function Conversations({
   organization,
   countries,
 }: ConversationsProps): React.ReactElement {
-  const initialState: InitialState = {
+  const initialState: State = {
     conversation: null,
     isNewConversation: false,
     isNewUser: false,
     userCreateErrors: [],
   };
 
-  const [state, setState] = useState<InitialState>(initialState);
+  const [state, setState] = useState<State>(initialState);
 
   const { isNewUser, userCreateErrors } = state;
 

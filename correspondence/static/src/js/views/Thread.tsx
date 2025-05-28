@@ -1,20 +1,24 @@
 import * as React from "react";
 import Message from "./Message";
 import classNames from "classnames";
-import * as types from "../types"
+import * as types from "../types";
 
 type ThreadProps = {
-  conversation: types.Conversation
-  messages: MessagePage
-  onScroll: () => void
-}
+  conversation: types.Conversation;
+  messages: MessagePage;
+  onScroll: () => void;
+};
 
 type MessagePage = {
-  data: types.Message[]
-  initial: boolean
-}
+  data: types.Message[];
+  initial: boolean;
+};
 
-export default function Thread({ conversation, messages, onScroll }: ThreadProps): React.ReactElement {
+export default function Thread({
+  conversation,
+  messages,
+  onScroll,
+}: ThreadProps): React.ReactElement {
   const messagesEndRef = React.useRef(null);
 
   // keep the scroll position on scroll to the top
@@ -39,7 +43,7 @@ export default function Thread({ conversation, messages, onScroll }: ThreadProps
         ref={messagesEndRef}
         onScroll={handleScroll}
       >
-        {messages.data.map(message => (
+        {messages.data.map((message) => (
           <li
             key={message.id}
             className={classNames({
@@ -47,7 +51,7 @@ export default function Thread({ conversation, messages, onScroll }: ThreadProps
               "conversation__message-list__item--received":
                 conversation && message.sender.id == conversation.receiver.id,
               "conversation__message-list__item--sent":
-                !conversation || message.sender.id != conversation.receiver.id
+                !conversation || message.sender.id != conversation.receiver.id,
             })}
           >
             <Message message={message} />
@@ -56,4 +60,4 @@ export default function Thread({ conversation, messages, onScroll }: ThreadProps
       </ul>
     </div>
   );
-};
+}

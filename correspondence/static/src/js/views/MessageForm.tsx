@@ -20,7 +20,7 @@ export default function MessageForm({
   onSubmit,
   focus,
   maxLength = DEFAULT_MAX_LENGTH,
-}: MessageFormProps) {
+}: MessageFormProps): React.ReactElement {
   let formSubmit: (e?: React.FormEvent<HTMLElement>) => void;
   let formReset: (nextState?: Partial<FormikState<{ body: string }>>) => void;
 
