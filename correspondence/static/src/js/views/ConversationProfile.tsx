@@ -4,21 +4,18 @@ import SvgActiveCampaign from "../icons/SvgActiveCampaign";
 import UserForm from "./UserForm";
 import classNames from "classnames";
 import { Countries, Error, OnUserUpdateEvent, P, User } from "../types";
+import { AppContext } from "../contexts";
 
 type ConversationProfileProps = {
-  user: User
-  onSubmit: (ev: OnUserUpdateEvent) => void
-  errors: Error[],
-  managers: User[],
-  countries: Countries
-}
+  user: User;
+  onSubmit: (ev: OnUserUpdateEvent) => void;
+  errors: Error[];
+};
 
 export default function ConversationProfile({
   user,
   onSubmit,
   errors,
-  managers,
-  countries
 }: ConversationProfileProps): React.ReactElement {
   const [submit, setSubmit] = React.useState(false);
 
@@ -45,8 +42,6 @@ export default function ConversationProfile({
               submit={submit}
               onErrors={onErrors}
               errors={errors}
-              managers={managers}
-              countries={countries}
             />
 
             <div className="field is-grouped conversation__profile__buttons">
@@ -55,7 +50,7 @@ export default function ConversationProfile({
                   className={classNames({
                     button: true,
                     "is-success": true,
-                    "is-loading": submit
+                    "is-loading": submit,
                   })}
                   onClick={() => {
                     setSubmit(true);
@@ -91,4 +86,4 @@ export default function ConversationProfile({
       )}
     </div>
   );
-};
+}

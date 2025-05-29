@@ -5,6 +5,7 @@ import api from "../api";
 import sanitize from "../utils/sanitize";
 import { useParams } from "react-router";
 import * as types from "../types";
+import { AppContext } from "../contexts";
 
 const usePrevious = (value: number) => {
   const ref = React.useRef(null);
@@ -19,13 +20,6 @@ const loadConversation = async (conversationId: number) => {
   return res.data;
 };
 
-type ConversationWrapperProps = {
-  authenticatedUser: types.User;
-  managers: types.User[];
-  organization: types.Organization;
-  countries: types.Countries;
-};
-
 type State = {
   conversation: types.Conversation | null;
   isNew: boolean;
@@ -33,12 +27,7 @@ type State = {
   userUpdateErrors: types.Error[];
 };
 
-export default function ConversationWrapper({
-  authenticatedUser,
-  managers,
-  organization,
-  countries,
-}: ConversationWrapperProps): React.ReactElement {
+export default function ConversationWrapper(): React.ReactElement {
   const initialState: State = {
     conversation: null,
     isNew: false,
@@ -164,14 +153,15 @@ export default function ConversationWrapper({
     }
   });
 
+  const { managers, authenticatedUser, organization, countries } =
+    React.useContext(AppContext);
+
   return (
     <div className="conversations__wrapper">
       <ConversationList
         onNewClick={onNewConversation}
-        organization={organization}
         conversation={conversation}
         isNew={isNew}
-        authenticatedUser={authenticatedUser}
       />
 
       <ConversationContainer
@@ -179,9 +169,7 @@ export default function ConversationWrapper({
         isNew={isNew}
         onAction={onConversationAction}
         onUserUpdate={onUserUpdate}
-        countries={countries}
         errors={userUpdateErrors}
-        managers={managers}
         selectedUsers={selectedUsers}
         onSearchAdd={onUserAdd}
         onSearchRemove={onUserRemove}

@@ -57,12 +57,11 @@ export type OnUserUpdateEvent = {
   onSuccess?: () => void;
 };
 
-
 export type PageMeta = {
   count: number;
   next: string | null;
   total: number;
-  offset?: number
+  offset?: number;
 };
 
 export type P = {
@@ -73,8 +72,14 @@ export type FormData = {
   [key: string]: string;
 };
 
-
 export type Error = {
   msg: string;
   loc: string[];
+};
+
+export type AppContext = {
+  organization: Organization;
+  managers: User[];
+  countries: Countries;
+  authenticatedUser: User;
 };

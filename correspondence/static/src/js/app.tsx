@@ -10,14 +10,15 @@ import UserForm from "./views/UserForm";
 import ConversationWrapper from "./views/ConversationWrapper";
 import sanitize from "./utils/sanitize";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
-import { Conversation, Countries, Error, OnUserCreateEvent, Organization, User } from "./types";
-
-type ConversationsProps = {
-  authenticatedUser: User;
-  managers: User[];
-  organization: Organization;
-  countries: Countries;
-};
+import {
+  Conversation,
+  Countries,
+  Error,
+  OnUserCreateEvent,
+  Organization,
+  User,
+} from "./types";
+import { AppContext } from "./contexts";
 
 type State = {
   conversation: Conversation;
@@ -26,18 +27,15 @@ type State = {
   userCreateErrors: Error[];
 };
 
-function Conversations({
-  authenticatedUser,
-  managers,
-  organization,
-  countries,
-}: ConversationsProps): React.ReactElement {
+function Conversations(): React.ReactElement {
   const initialState: State = {
     conversation: null,
     isNewConversation: false,
     isNewUser: false,
     userCreateErrors: [],
   };
+
+  const { organization } = React.useContext(AppContext);
 
   const [state, setState] = useState<State>(initialState);
 
@@ -88,37 +86,18 @@ function Conversations({
         title="Create a new contact"
         onSave={onUserCreate}
       >
-        <UserForm
-          errors={userCreateErrors}
-          countries={countries}
-          managers={managers}
-          authenticatedUser={authenticatedUser}
-        />
+        <UserForm errors={userCreateErrors} />
       </Modal>
 
       <BrowserRouter>
         <Routes>
           <Route
             path="/organizations/:slug/conversations?"
-            element={
-              <ConversationWrapper
-                organization={organization}
-                authenticatedUser={authenticatedUser}
-                countries={countries}
-                managers={managers}
-              />
-            }
+            element={<ConversationWrapper />}
           />
           <Route
             path="/organizations/:slug/conversations/:id"
-            element={
-              <ConversationWrapper
-                organization={organization}
-                authenticatedUser={authenticatedUser}
-                countries={countries}
-                managers={managers}
-              />
-            }
+            element={<ConversationWrapper/>}
           />
         </Routes>
       </BrowserRouter>
@@ -159,12 +138,16 @@ window.addEventListener("DOMContentLoaded", () => {
     );
 
     root.render(
-      <Conversations
-        authenticatedUser={window.CDE.authenticatedUser}
-        organization={organization}
-        countries={supportedCountries}
-        managers={managers}
-      />
+      <AppContext
+        value={{
+          authenticatedUser: window.CDE.authenticatedUser,
+          organization: organization,
+          countries: supportedCountries,
+          managers: managers,
+        }}
+      >
+        <Conversations />
+      </AppContext>
     );
   })();
 });

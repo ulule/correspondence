@@ -74,6 +74,7 @@
     "date-fns": "^4.1.0",
     "formik": "^2.4.6",
     "initials": "^3.0.1",
+    "jotai": "^2.12.5",
     "prettier": "^3.5.3",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",

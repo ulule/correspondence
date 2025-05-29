@@ -3,6 +3,7 @@ import * as Yup from "yup";
 import { Formik, FormikState } from "formik";
 import withFormikValidator from "../hoc/withFormikValidator";
 import * as types from "../types";
+import { AppContext } from "../contexts";
 
 function filterNulls(obj: types.P): types.FormData {
   const newObj = { ...obj };
@@ -29,9 +30,6 @@ type UserFormProps = {
   submit?: boolean;
   onErrors?: (values: types.P) => void;
   formErrors?: types.P;
-  managers: types.User[];
-  authenticatedUser?: types.User;
-  countries: types.Countries;
 };
 
 const UserForm = ({
@@ -40,9 +38,6 @@ const UserForm = ({
   submit,
   formErrors,
   user,
-  managers,
-  authenticatedUser,
-  countries,
 }: UserFormProps): React.ReactElement => {
   let formSubmit: () => Promise<void>;
   let formReset: (nextState?: Partial<FormikState<{ body: string }>>) => void;
@@ -58,6 +53,8 @@ const UserForm = ({
   }, [submit]);
 
   const userData = filterNulls(user);
+
+  const { managers, countries } = React.useContext(AppContext);
 
   return (
     <Formik

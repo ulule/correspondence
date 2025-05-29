@@ -3,13 +3,12 @@ import ConversationItem from "./ConversationItem";
 import classNames from "classnames";
 import api from "../api";
 import { Conversation, Organization, PageMeta, User } from "../types";
+import { AppContext } from "../contexts";
 
 type ConversationListProps = {
   conversation: Conversation;
   onNewClick: () => void;
   isNew: boolean;
-  authenticatedUser: User;
-  organization: Organization;
 };
 
 type State = {
@@ -24,8 +23,6 @@ export default function ConversationList({
   conversation,
   onNewClick,
   isNew,
-  authenticatedUser,
-  organization,
 }: ConversationListProps): React.ReactElement {
   const initialState: State = {
     data: [],
@@ -35,6 +32,8 @@ export default function ConversationList({
     meta: { count: 0, next: null, total: 0, offset: 0 },
   };
   const [conversations, setConversations] = React.useState<State>(initialState);
+
+  const { authenticatedUser, organization } = React.useContext(AppContext);
 
   const filters = [
     {

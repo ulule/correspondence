@@ -9,10 +9,8 @@ type ConversationProps = {
   isNew: boolean;
   onUserUpdate: (ev: types.OnUserUpdateEvent) => void;
   errors: types.Error[];
-  managers: types.User[];
   selectedUsers: types.User[];
   messageFormFocus: boolean;
-  countries: types.Countries;
 };
 
 export default function Conversation({
@@ -20,10 +18,8 @@ export default function Conversation({
   isNew,
   onUserUpdate,
   errors,
-  managers,
   selectedUsers,
   messageFormFocus,
-  countries,
 }: ConversationProps): React.ReactElement {
   return (
     <div className="conversation__container">
@@ -37,8 +33,6 @@ export default function Conversation({
       {!isNew && (
         <ConversationProfile
           errors={errors}
-          managers={managers}
-          countries={countries}
           user={conversation && conversation.receiver}
           onSubmit={onUserUpdate}
         />

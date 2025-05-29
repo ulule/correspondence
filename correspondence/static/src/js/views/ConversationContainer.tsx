@@ -11,10 +11,8 @@ type ConversationContainerProps = {
   onSearchRemove: (user: types.User) => void;
   onAction: (action: string) => void;
   errors: types.Error[];
-  managers: types.User[];
   onUserUpdate: (ev: types.OnUserUpdateEvent) => void;
   selectedUsers: types.User[];
-  countries: types.Countries;
 };
 
 export default function ConversationContainer({
@@ -24,10 +22,8 @@ export default function ConversationContainer({
   onSearchRemove,
   onAction,
   errors,
-  managers,
   onUserUpdate,
   selectedUsers,
-  countries,
 }: ConversationContainerProps): React.ReactElement {
   const showConversation = conversation || selectedUsers.length > 0;
 
@@ -86,8 +82,6 @@ export default function ConversationContainer({
           onUserUpdate={onUserUpdate}
           isNew={isNew}
           errors={errors}
-          managers={managers}
-          countries={countries}
           selectedUsers={selectedUsers}
           messageFormFocus={!isNew}
         />
