@@ -1,7 +1,7 @@
 import * as React from "react";
 import ConversationItem from "./ConversationItem";
 import classNames from "classnames";
-import { client, getConversations } from "../api";
+import { getConversations } from "../api";
 import { Conversation, PageMeta } from "../types";
 import { AppContext } from "../contexts";
 

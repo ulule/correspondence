@@ -1,5 +1,5 @@
 import * as React from "react";
-import { client, getConversationMessages } from "../api";
+import { client, createUserMessage, getConversationMessages } from "../api";
 import Thread from "./Thread";
 import MessageForm from "./MessageForm";
 import * as types from "../types";
@@ -95,16 +95,16 @@ export default function ThreadContainer({
 
     if (conversation) {
       promises = [
-        client.post(`/users/${conversation.receiver.id}/conversation/`, values),
+        createUserMessage({ userId: conversation.receiver.id, values: values }),
       ];
     } else {
       promises = selectedUsers.map((user) =>
-        client.post(`/users/${user.id}/conversation/`, values)
+        createUserMessage({ userId: user.id, values: values })
       );
     }
 
     Promise.all(promises).then((values) => {
-      const newMessage = values[0].data;
+      const newMessage = values[0];
       newMessage.conversation.last_message = newMessage;
 
       cb();

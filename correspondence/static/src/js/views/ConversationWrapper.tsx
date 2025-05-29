@@ -1,7 +1,7 @@
 import * as React from "react";
 import ConversationList from "./ConversationList";
 import ConversationContainer from "./ConversationContainer";
-import { client, getConversation, markConversation, updateUser } from "../api";
+import { getConversation, markConversation, updateUser } from "../api";
 import sanitize from "../utils/sanitize";
 import { useParams } from "react-router";
 import * as types from "../types";

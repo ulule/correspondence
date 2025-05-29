@@ -24,6 +24,11 @@ type CreateUserQuery = {
   values: P;
 };
 
+type CreateUserMessageQuery = {
+  userId: number;
+  values: P;
+};
+
 export async function getConversation(
   conversationId: number
 ): Promise<Conversation> {
@@ -67,6 +72,11 @@ export async function updateUser({
 
 export async function createUser({ organizationSlug, values }: CreateUserQuery): Promise<User> {
   const res = await client.post(`/organizations/${organizationSlug}/users/`, values);
+  return res.data;
+}
+
+export async function createUserMessage({ userId, values }: CreateUserMessageQuery): Promise<Message> {
+  const res = await client.post(`/users/${userId}/conversation/`, values);
   return res.data;
 }
 
