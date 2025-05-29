@@ -72,13 +72,13 @@ async def nexmo(
 
     repo = MessagePart.repository(asession)
     messagepart, created = await repo.aget_or_create(
-        sender_id=user.id,
-        provider_id=payload.message_id,
+        part_id=payload.concat_part,
+        part_ref=payload.concat_ref,
+        organization_id=organization.id,
         defaults={
             "body": payload.text,
-            "organization_id": organization.id,
-            "part_id": payload.concat_part,
-            "part_ref": payload.concat_ref,
+            "sender_id": user.id,
+            "provider_id": payload.message_id,
         },
     )
 
