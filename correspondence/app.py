@@ -69,6 +69,7 @@ class FastAPI(BaseFastAPI):
         app.setup_logging()
         app.setup_database()
         app.setup_templates()
+        app.setup_error_reporting()
 
         if settings.ENV != Environment.testing:
             app.add_middleware(
@@ -96,6 +97,9 @@ class FastAPI(BaseFastAPI):
         return app
 
     def setup_error_reporting(self):
+        if not self.settings.SENTRY_DSN:
+            return
+
         sentry_sdk.init(
             dsn=self.settings.SENTRY_DSN,
             send_default_pii=True,
