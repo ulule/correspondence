@@ -1,7 +1,7 @@
 import * as React from "react";
 import classNames from "classnames";
 import Avatar from "../components/Avatar";
-import api from "../api";
+import { client } from "../api";
 import { PageMeta, User } from "../types";
 
 type State = {
@@ -59,7 +59,7 @@ export default function UserList({
     setUsers({ ...users, ...{ loading: true, search: name } });
 
     (async () => {
-      const res = await api.get(`/users/?q=${encodeURIComponent(name)}`);
+      const res = await client.get(`/users/?q=${encodeURIComponent(name)}`);
       const data = { ...res.data, ...{ search: name } };
 
       setUsers(data);

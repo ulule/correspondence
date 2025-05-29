@@ -1,7 +1,7 @@
 import * as React from "react";
 import ConversationList from "./ConversationList";
 import ConversationContainer from "./ConversationContainer";
-import api from "../api";
+import { client, getConversation, markConversation, updateUser } from "../api";
 import sanitize from "../utils/sanitize";
 import { useParams } from "react-router";
 import * as types from "../types";
@@ -14,12 +14,6 @@ const usePrevious = (value: number) => {
   });
   return ref.current;
 };
-
-const loadConversation = async (conversationId: number) => {
-  let res = await api.get(`/users/${conversationId}/conversation`);
-  return res.data;
-};
-
 type State = {
   conversation: types.Conversation | null;
   isNew: boolean;
@@ -44,17 +38,21 @@ export default function ConversationWrapper(): React.ReactElement {
   }: types.OnUserUpdateEvent) => {
     try {
       const values = sanitize(rawValues);
-      const res = await api.patch(`/users/${conversation.receiver.id}/`, {
-        first_name: values.first_name,
-        last_name: values.last_name,
-        active_campaign_id: values.active_campaign_id,
-        email: values.email,
-        phone_number: values.phone_number,
-        manager_id: values.manager_id,
-        country: values.country,
+
+      const user = await updateUser({
+        userId: conversation.receiver.id,
+        values: {
+          first_name: values.first_name,
+          last_name: values.last_name,
+          active_campaign_id: values.active_campaign_id,
+          email: values.email,
+          phone_number: values.phone_number,
+          manager_id: values.manager_id,
+          country: values.country,
+        },
       });
 
-      const conv = { ...conversation, ...{ receiver: res.data } };
+      const conv = { ...conversation, ...{ receiver: user } };
 
       setState({
         ...state,
@@ -69,11 +67,7 @@ export default function ConversationWrapper(): React.ReactElement {
   };
 
   const onConversationAction = async (action: string) => {
-    const res = await api.post(
-      `/conversations/${conversation.id}/${action}/`,
-      {}
-    );
-    const conv = res.data;
+    const conv = await markConversation(conversation.id, action);
 
     setState({
       ...state,
@@ -89,7 +83,7 @@ export default function ConversationWrapper(): React.ReactElement {
   };
 
   const onConversationFocus = async (conversationId: number, props = {}) => {
-    const conv = await loadConversation(conversationId);
+    const conv = await getConversation(conversationId);
 
     setState({
       ...state,

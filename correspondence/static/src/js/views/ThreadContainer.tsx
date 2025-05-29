@@ -1,5 +1,5 @@
 import * as React from "react";
-import api from "../api";
+import { client, getConversationMessages } from "../api";
 import Thread from "./Thread";
 import MessageForm from "./MessageForm";
 import * as types from "../types";
@@ -46,20 +46,17 @@ export default function ThreadContainer({
         });
 
         (async () => {
-          const res = await api.get(
-            `/conversations/${conversation.id}/messages/`
-          );
+          const page = await getConversationMessages({
+            conversationId: conversation.id,
+          });
 
-          const data = {
-            ...res.data,
-            ...{
-              data: res.data.data.reverse(),
-              initial: true,
-              loading: false,
-            },
-          };
-
-          setMessages(data);
+          setMessages({
+            data: page.data.reverse(),
+            initial: false,
+            loading: false,
+            meta: page.meta,
+            finished: false,
+          });
         })();
       }
     } else {
@@ -72,20 +69,22 @@ export default function ThreadContainer({
       return;
     }
     const last = messages.data[0];
-    const res = await api.get(
-      `/conversations/${conversation.id}/messages/?ending_before=${last.id}&limit=${DEFAULT_LIMIT}`
-    );
 
-    const latestResults = (res.data.data as types.Message[]).filter(
+    const page = await getConversationMessages({
+      conversationId: conversation.id,
+      lastMessageId: last.id,
+    });
+
+    const latestResults = (page.data as types.Message[]).filter(
       (msg1) => !messages.data.find((msg2) => msg2 === msg1)
     );
 
     const data = {
-      ...res.data,
-      ...{
-        data: [...latestResults.reverse(), ...messages.data],
-      },
-      ...{ finished: latestResults.length < DEFAULT_LIMIT },
+      data: [...latestResults.reverse(), ...messages.data],
+      meta: page.meta,
+      loading: false,
+      initial: false,
+      finished: latestResults.length < DEFAULT_LIMIT,
     };
 
     setMessages(data);
@@ -96,11 +95,11 @@ export default function ThreadContainer({
 
     if (conversation) {
       promises = [
-        api.post(`/users/${conversation.receiver.id}/conversation/`, values),
+        client.post(`/users/${conversation.receiver.id}/conversation/`, values),
       ];
     } else {
       promises = selectedUsers.map((user) =>
-        api.post(`/users/${user.id}/conversation/`, values)
+        client.post(`/users/${user.id}/conversation/`, values)
       );
     }
 

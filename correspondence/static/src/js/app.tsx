@@ -3,7 +3,7 @@ import * as ReactDOM from "react-dom/client";
 import * as React from "react";
 
 import { useState } from "react";
-import api from "./api";
+import { client, createUser } from "./api";
 import Navbar from "./views/Navbar";
 import Modal from "./components/Modal";
 import UserForm from "./views/UserForm";
@@ -43,11 +43,7 @@ function Conversations(): React.ReactElement {
 
   const onUserCreate = async (props: OnUserCreateEvent) => {
     try {
-      const values = sanitize(props.values);
-      const res = await api.post(
-        `/organizations/${organization.slug}/users/`,
-        sanitize(values)
-      );
+      await createUser({organizationSlug: organization.slug, values: sanitize(props.values)})
 
       setState({
         ...state,
@@ -97,7 +93,7 @@ function Conversations(): React.ReactElement {
           />
           <Route
             path="/organizations/:slug/conversations/:id"
-            element={<ConversationWrapper/>}
+            element={<ConversationWrapper />}
           />
         </Routes>
       </BrowserRouter>
@@ -119,7 +115,7 @@ declare global {
 }
 
 async function loadManagers(): Promise<User[]> {
-  const res = await api.get(`/users/?is_staff=1`);
+  const res = await client.get(`/users/?is_staff=1`);
   return res.data.data;
 }
 

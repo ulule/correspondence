@@ -3,8 +3,7 @@ import Avatar from "../components/Avatar";
 import SvgActiveCampaign from "../icons/SvgActiveCampaign";
 import UserForm from "./UserForm";
 import classNames from "classnames";
-import { Countries, Error, OnUserUpdateEvent, P, User } from "../types";
-import { AppContext } from "../contexts";
+import { Error, OnUserUpdateEvent, P, User } from "../types";
 
 type ConversationProfileProps = {
   user: User;

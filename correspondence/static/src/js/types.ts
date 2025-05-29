@@ -57,6 +57,11 @@ export type OnUserUpdateEvent = {
   onSuccess?: () => void;
 };
 
+export type Page<T> = {
+  meta: PageMeta
+  data: T[]
+}
+
 export type PageMeta = {
   count: number;
   next: string | null;

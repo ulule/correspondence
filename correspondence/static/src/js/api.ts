@@ -1,5 +1,91 @@
+import { Conversation, Message, P, Page, User } from "./types";
 import requester from "./utils/requester";
 
-const api = requester(window.CDE.api.url);
+export const client = requester(window.CDE.api.url);
 
-export default api;
+type GetConversationsQuery = {
+  organizationSlug: string;
+  managerId?: number;
+  offset?: number;
+};
+
+type GetConversationMessagesQuery = {
+  conversationId: number;
+  lastMessageId?: number;
+};
+
+type UpdateUserQuery = {
+  userId: number;
+  values: P;
+};
+
+type CreateUserQuery = {
+  organizationSlug: string;
+  values: P;
+};
+
+export async function getConversation(
+  conversationId: number
+): Promise<Conversation> {
+  let res = await client.get(`/users/${conversationId}/conversation`);
+  return res.data;
+}
+
+export async function markConversation(
+  conversationId: number,
+  state: string
+): Promise<Conversation> {
+  const res = await client.post(
+    `/conversations/${conversationId}/${state}/`,
+    {}
+  );
+
+  return res.data;
+}
+
+export async function getConversationMessages({
+  conversationId,
+  lastMessageId,
+}: GetConversationMessagesQuery): Promise<Page<Message>> {
+  let url = `/conversations/${conversationId}/messages/?limit=20`;
+  if (lastMessageId) {
+    url = `${url}&ending_before=${lastMessageId}`;
+  }
+  const res = await client.get(url);
+  const data = res.data;
+
+  return data;
+}
+
+export async function updateUser({
+  userId,
+  values,
+}: UpdateUserQuery): Promise<User> {
+  const res = await client.patch(`/users/${userId}/`, values);
+  return res.data;
+}
+
+export async function createUser({ organizationSlug, values }: CreateUserQuery): Promise<User> {
+  const res = await client.post(`/organizations/${organizationSlug}/users/`, values);
+  return res.data;
+}
+
+export async function getConversations({
+  organizationSlug,
+  managerId,
+  offset,
+}: GetConversationsQuery): Promise<Page<Conversation>> {
+  let url = `/organizations/${organizationSlug}/conversations/?limit=20`;
+  if (offset) {
+    url = `${url}&offset=${offset}`;
+  }
+
+  if (managerId) {
+    url = `${url}&manager_id=${managerId}`;
+  }
+
+  const res = await client.get(url);
+  const data = res.data;
+
+  return data;
+}

@@ -1,8 +1,8 @@
 import * as React from "react";
 import ConversationItem from "./ConversationItem";
 import classNames from "classnames";
-import api from "../api";
-import { Conversation, Organization, PageMeta, User } from "../types";
+import { client, getConversations } from "../api";
+import { Conversation, PageMeta } from "../types";
 import { AppContext } from "../contexts";
 
 type ConversationListProps = {
@@ -63,24 +63,18 @@ export default function ConversationList({
 
     const offset = conversations.meta.offset + 20;
 
-    let url = `/organizations/${organization.slug}/conversations/?offset=${offset}&limit=20`;
-
-    const managerId = conversations.managerId;
-
-    if (managerId) {
-      url = `${url}&manager_id=${managerId}`;
-    }
-
-    const res = await api.get(url);
-
-    const data = res.data;
+    const page = await getConversations({
+      organizationSlug: organization.slug,
+      managerId: conversations.managerId,
+      offset: offset,
+    });
 
     setConversations({
-      ...data,
-      ...{
-        data: [...conversations.data, ...data.data],
-        managerId: managerId,
-      },
+      data: [...conversations.data, ...page.data],
+      managerId: conversations.managerId,
+      meta: page.meta,
+      loading: false,
+      initial: false,
     });
   };
 
@@ -98,21 +92,17 @@ export default function ConversationList({
       ...{ initial: false, loading: true },
     });
 
-    let url = `/organizations/${organization.slug}/conversations/`;
-
-    if (managerId) {
-      url = `${url}?manager_id=${managerId}`;
-    }
-
-    const res = await api.get(url);
-    const data = res.data;
+    const page = await getConversations({
+      organizationSlug: organization.slug,
+      managerId: managerId,
+    });
 
     setConversations({
-      ...data,
-      ...{
-        data: data.data,
-        managerId: managerId,
-      },
+      data: page.data,
+      managerId: managerId,
+      meta: page.meta,
+      loading: false,
+      initial: false,
     });
   };
 
