@@ -17,14 +17,10 @@ export default function Conversation({
   return (
     <div className="conversation__container">
       <div className="conversation__wrapper">
-        <ThreadContainer
-          messageFormFocus={messageFormFocus}
-        />
+        <ThreadContainer messageFormFocus={messageFormFocus} />
       </div>
       {conversation && conversation.receiver && (
-        <ConversationProfile
-          user={conversation.receiver}
-        />
+        <ConversationProfile user={conversation.receiver} />
       )}
     </div>
   );

@@ -2,28 +2,31 @@ import * as React from "react";
 import Conversation from "./Conversation";
 import UserList from "./UserList";
 import classNames from "classnames";
-import * as types from "../types";
-import { useAtomValue } from "jotai";
-import { conversationAtom, selectedUsersAtom } from "../atoms";
+import { useAtom, useAtomValue } from "jotai";
+import { markConversation } from "../api";
+import {
+  conversationAtom,
+  isNewConversation,
+  selectedUsersAtom,
+} from "../atoms";
 
-type ConversationContainerProps = {
-  onSearchAdd: (user: types.User) => void;
-  onSearchRemove: (user: types.User) => void;
-  onAction: (action: string) => void;
-  isNew: boolean;
-};
+type ConversationContainerProps = {};
 
-export default function ConversationContainer({
-  onSearchAdd,
-  onSearchRemove,
-  onAction,
-  isNew,
-}: ConversationContainerProps): React.ReactElement {
-  const conversation = useAtomValue(conversationAtom);
+export default function ConversationContainer({}: ConversationContainerProps): React.ReactElement {
+  const [conversation, setConversation] = useAtom(conversationAtom);
 
-  const selectedUsers = useAtomValue(selectedUsersAtom)
+  const selectedUsers = useAtomValue(selectedUsersAtom);
 
-  const showConversation = conversation || selectedUsers && selectedUsers.length > 0;
+  const isNew = useAtomValue(isNewConversation);
+
+  const showConversation =
+    conversation || (selectedUsers && selectedUsers.length > 0);
+
+  const onAction = async (action: string) => {
+    const conv = await markConversation(conversation.id, action);
+
+    setConversation(conv);
+  };
 
   return (
     <div className="conversation">
@@ -38,12 +41,7 @@ export default function ConversationContainer({
                 conversation.receiver.name}
             </strong>
           )}
-          {isNew && (
-            <UserList
-              onUserAdd={onSearchAdd}
-              onUserRemove={onSearchRemove}
-            />
-          )}
+          {isNew && <UserList />}
         </div>
         {!isNew && conversation && conversation.id && conversation.unread && (
           <div className="toolbox__item">
@@ -73,9 +71,7 @@ export default function ConversationContainer({
         )}
       </div>
 
-      {showConversation && (
-        <Conversation messageFormFocus={!isNew} />
-      )}
+      {showConversation && <Conversation messageFormFocus={!isNew} />}
     </div>
   );
 }

@@ -4,13 +4,10 @@ import classNames from "classnames";
 import { getConversations } from "../api";
 import { Conversation, PageMeta } from "../types";
 import { AppContext } from "../contexts";
-import { useAtomValue } from "jotai";
-import { conversationAtom } from "../atoms";
+import { useAtomValue, useAtom } from "jotai";
+import { conversationAtom, isNewConversation } from "../atoms";
 
-type ConversationListProps = {
-  onNewClick: () => void;
-  isNew: boolean
-};
+type ConversationListProps = {};
 
 type State = {
   data: Conversation[];
@@ -20,10 +17,7 @@ type State = {
   meta: PageMeta;
 };
 
-export default function ConversationList({
-  onNewClick,
-  isNew,
-}: ConversationListProps): React.ReactElement {
+export default function ConversationList({}: ConversationListProps): React.ReactElement {
   const initialState: State = {
     data: [],
     managerId: null,
@@ -31,6 +25,8 @@ export default function ConversationList({
     initial: true,
     meta: { count: 0, next: null, total: 0, offset: 0 },
   };
+  const [isNew, setIsNewConversation] = useAtom(isNewConversation);
+
   const [conversations, setConversations] = React.useState<State>(initialState);
 
   const { authenticatedUser, organization } = React.useContext(AppContext);
@@ -143,7 +139,12 @@ export default function ConversationList({
         </div>
         <p className="buttons">
           {!isNew && (
-            <a className="button is-active is-link" onClick={onNewClick}>
+            <a
+              className="button is-active is-link"
+              onClick={() => {
+                setIsNewConversation(true);
+              }}
+            >
               <span>New</span>
               <span className="icon is-small">
                 <i className="fas fa-plus"></i>
@@ -151,7 +152,12 @@ export default function ConversationList({
             </a>
           )}
           {isNew && (
-            <a className="button is-danger" onClick={onNewClick}>
+            <a
+              className="button is-danger"
+              onClick={() => {
+                setIsNewConversation(false);
+              }}
+            >
               <span>Close</span>
               <span className="icon is-small">
                 <i className="fas fa-times"></i>

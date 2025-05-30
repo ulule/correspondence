@@ -9,12 +9,18 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Countries, Organization, User } from "./types";
 import { AppContext } from "./contexts";
 import UserCreate from "./views/UserCreate";
+import ConversationList from "./views/ConversationList";
+import { useSetAtom } from "jotai";
+import { isNewConversation } from "./atoms";
 
 function Conversations(): React.ReactElement {
+
   return (
     <div className="conversations">
       <div className="conversations__wrapper">
         <BrowserRouter>
+          <ConversationList  />
+
           <Routes>
             <Route
               path="/organizations/:slug/conversations?"

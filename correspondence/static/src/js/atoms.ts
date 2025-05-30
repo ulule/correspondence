@@ -13,3 +13,5 @@ export const messagesAtom = atom<Message[] | null>();
 export const userFormSubmmitting = atom<boolean>(false);
 
 export const submitUserForm = atom<boolean>(false);
+
+export const isNewConversation = atom<boolean>(false);

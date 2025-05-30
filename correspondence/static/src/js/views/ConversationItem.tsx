@@ -3,6 +3,7 @@ import { parseISO, formatDistanceToNow } from "date-fns";
 import Avatar from "../components/Avatar";
 import { Link, useParams } from "react-router-dom";
 import { Conversation } from "../types";
+import { AppContext } from "../contexts";
 
 type ConversationItemProps = {
   conversation: Conversation;
@@ -21,11 +22,11 @@ export default function ConversationItem({
     createdAt = parseISO(last_message.created_at);
   }
 
-  const { slug: organizationSlug } = useParams();
+  const { organization } = React.useContext(AppContext);
 
   return (
     <Link
-      to={`/organizations/${organizationSlug}/conversations/${conversation.receiver.id}`}
+      to={`/organizations/${organization.slug}/conversations/${conversation.receiver.id}`}
     >
       <div className="conversation__item-container">
         <header className="conversation__item__head">

@@ -1,10 +1,10 @@
 import * as React from "react";
 import classNames from "classnames";
 import Avatar from "../components/Avatar";
-import { getUsers } from "../api";
+import { getConversation, getUsers } from "../api";
 import { PageMeta, User } from "../types";
-import { useAtomValue } from "jotai";
-import { selectedUsersAtom } from "../atoms";
+import { useAtom, useSetAtom } from "jotai";
+import { conversationAtom, selectedUsersAtom } from "../atoms";
 
 type State = {
   data: User[];
@@ -20,23 +20,18 @@ const usersInitialState: State = {
   meta: { count: 0, next: null, total: 0 },
 };
 
-type UserListProps = {
-  onUserAdd: (user: User) => void;
-  onUserRemove: (user: User) => void;
-};
+type UserListProps = {};
 
 type TypingState = {
   typing: boolean;
   timeout?: NodeJS.Timeout;
 };
 
-export default function UserList({
-  onUserAdd,
-  onUserRemove,
-}: UserListProps): React.ReactElement {
+export default function UserList({}: UserListProps): React.ReactElement {
   const [typing, setTyping] = React.useState<TypingState>({ typing: false });
   const [state, setState] = React.useState<State>(usersInitialState);
-  const selectedUsers = useAtomValue(selectedUsersAtom);
+  const [selectedUsers, setSelectedUsers] = useAtom(selectedUsersAtom);
+  const setConversation = useSetAtom(conversationAtom)
 
   const handleUserAdd = (user: User) => {
     setState(usersInitialState);
@@ -92,6 +87,26 @@ export default function UserList({
 
   const { loading, data: users, search: searchTerm } = state;
 
+  const onUserAdd = async (user: User) => {
+    const index = (selectedUsers ?? []).findIndex((cur) => cur.id === user.id);
+
+    if (index === -1) {
+      const newSelectedUsers = [...(selectedUsers ?? []), user];
+
+      if (newSelectedUsers.length === 1) {
+        const conversation = await getConversation(newSelectedUsers[0].id)
+        setConversation(conversation)
+      }
+
+      setSelectedUsers(newSelectedUsers);
+    }
+  };
+
+  const onUserRemove = (user: User) => {
+    const newSelectedUsers = selectedUsers.filter((cur) => cur.id != user.id);
+    setSelectedUsers(newSelectedUsers);
+  };
+
   return (
     <>
       <div>
@@ -108,17 +123,18 @@ export default function UserList({
             </span>
             <div className="userlist">
               <div className="field is-grouped is-grouped-multiline">
-                {selectedUsers.map((user) => (
-                  <div key={user.id} className="control">
-                    <span className="tag is-link is-medium">
-                      {user.name}
-                      <button
-                        onClick={() => onUserRemove(user)}
-                        className="delete is-small"
-                      ></button>
-                    </span>
-                  </div>
-                ))}
+                {selectedUsers &&
+                  selectedUsers.map((user) => (
+                    <div key={user.id} className="control">
+                      <span className="tag is-link is-medium">
+                        {user.name}
+                        <button
+                          onClick={() => onUserRemove(user)}
+                          className="delete is-small"
+                        ></button>
+                      </span>
+                    </div>
+                  ))}
                 <div className="control">
                   <input
                     className="input"
