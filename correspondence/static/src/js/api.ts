@@ -1,7 +1,7 @@
 import { Conversation, Message, P, Page, User } from "./types";
 import requester from "./utils/requester";
 
-export const client = requester(window.CDE.api.url);
+const client = requester(window.CDE.api.url);
 
 type GetConversationsQuery = {
   organizationSlug: string;
@@ -85,6 +85,12 @@ export async function createUser({
     `/organizations/${organizationSlug}/users/`,
     values
   );
+  return res.data;
+}
+
+export async function getUsers(term: string): Promise<Page<User>> {
+  const res = await client.get(`/users/?q=${term}`);
+
   return res.data;
 }
 

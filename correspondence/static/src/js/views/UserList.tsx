@@ -1,7 +1,7 @@
 import * as React from "react";
 import classNames from "classnames";
 import Avatar from "../components/Avatar";
-import { client } from "../api";
+import { getUsers } from "../api";
 import { PageMeta, User } from "../types";
 import { useAtomValue } from "jotai";
 import { selectedUsersAtom } from "../atoms";
@@ -35,11 +35,11 @@ export default function UserList({
   onUserRemove,
 }: UserListProps): React.ReactElement {
   const [typing, setTyping] = React.useState<TypingState>({ typing: false });
-  const [users, setUsers] = React.useState<State>(usersInitialState);
+  const [state, setState] = React.useState<State>(usersInitialState);
   const selectedUsers = useAtomValue(selectedUsersAtom);
 
   const handleUserAdd = (user: User) => {
-    setUsers(usersInitialState);
+    setState(usersInitialState);
     searchInputRef.current.value = "";
 
     onUserAdd(user);
@@ -47,7 +47,7 @@ export default function UserList({
 
   const onSearchChange = (name: string) => {
     if (name === "") {
-      setUsers({
+      setState({
         data: [],
         loading: false,
         search: "",
@@ -57,13 +57,17 @@ export default function UserList({
       return;
     }
 
-    setUsers({ ...users, ...{ loading: true, search: name } });
+    setState({ ...state, ...{ loading: true, search: name } });
 
     (async () => {
-      const res = await client.get(`/users/?q=${encodeURIComponent(name)}`);
-      const data = { ...res.data, ...{ search: name } };
+      const page = await getUsers(encodeURIComponent(name));
 
-      setUsers(data);
+      setState({
+        data: page.data,
+        search: name,
+        loading: false,
+        meta: page.meta,
+      });
     })();
   };
 
@@ -86,6 +90,8 @@ export default function UserList({
     });
   };
 
+  const { loading, data: users, search: searchTerm } = state;
+
   return (
     <>
       <div>
@@ -94,7 +100,7 @@ export default function UserList({
             className={classNames({
               control: true,
               userlist__container: true,
-              "is-loading": users.loading,
+              "is-loading": loading,
             })}
           >
             <span className="icon is-small">
@@ -118,7 +124,7 @@ export default function UserList({
                     className="input"
                     type="text"
                     placeholder="Enter a name or a number"
-                    defaultValue={users.search}
+                    defaultValue={searchTerm}
                     onChange={handleChange}
                     ref={searchInputRef}
                   />
@@ -128,11 +134,11 @@ export default function UserList({
           </div>
         </div>
       </div>
-      {users.data.length > 0 && (
+      {users.length > 0 && (
         <div className="dropdown is-active">
           <div className="dropdown-menu" id="dropdown-menu" role="menu">
             <div className="dropdown-content">
-              {users.data.map((user) => (
+              {users.map((user) => (
                 <a
                   key={user.id}
                   onClick={() => handleUserAdd(user)}
