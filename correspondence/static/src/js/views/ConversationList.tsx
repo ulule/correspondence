@@ -4,11 +4,11 @@ import classNames from "classnames";
 import { getConversations } from "../api";
 import { Conversation, PageMeta } from "../types";
 import { AppContext } from "../contexts";
+import { useAtomValue } from "jotai";
+import { conversationAtom } from "../atoms";
 
 type ConversationListProps = {
-  conversation: Conversation;
   onNewClick: () => void;
-  isNew: boolean;
 };
 
 type State = {
@@ -20,9 +20,7 @@ type State = {
 };
 
 export default function ConversationList({
-  conversation,
   onNewClick,
-  isNew,
 }: ConversationListProps): React.ReactElement {
   const initialState: State = {
     data: [],
@@ -34,6 +32,10 @@ export default function ConversationList({
   const [conversations, setConversations] = React.useState<State>(initialState);
 
   const { authenticatedUser, organization } = React.useContext(AppContext);
+
+  const conversation = useAtomValue(conversationAtom);
+
+  const isNew = conversation && conversation.id === 0;
 
   const filters = [
     {

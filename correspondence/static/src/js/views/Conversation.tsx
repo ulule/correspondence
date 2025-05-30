@@ -3,10 +3,10 @@ import * as React from "react";
 import ConversationProfile from "./ConversationProfile";
 import ThreadContainer from "./ThreadContainer";
 import * as types from "../types";
+import { useAtomValue } from "jotai";
+import { conversationAtom } from "../atoms";
 
 type ConversationProps = {
-  conversation: types.Conversation;
-  isNew: boolean;
   onUserUpdate: (ev: types.OnUserUpdateEvent) => void;
   errors: types.Error[];
   selectedUsers: types.User[];
@@ -14,26 +14,27 @@ type ConversationProps = {
 };
 
 export default function Conversation({
-  conversation,
-  isNew,
   onUserUpdate,
   errors,
   selectedUsers,
   messageFormFocus,
 }: ConversationProps): React.ReactElement {
+  const conversation = useAtomValue(conversationAtom);
+
+  const isNew = conversation && conversation.id === 0
+
   return (
     <div className="conversation__container">
       <div className="conversation__wrapper">
         <ThreadContainer
-          conversation={conversation}
           messageFormFocus={messageFormFocus}
           selectedUsers={selectedUsers}
         />
       </div>
       {!isNew && (
         <ConversationProfile
+          user={conversation.receiver}
           errors={errors}
-          user={conversation && conversation.receiver}
           onSubmit={onUserUpdate}
         />
       )}

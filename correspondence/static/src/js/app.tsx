@@ -43,7 +43,10 @@ function Conversations(): React.ReactElement {
 
   const onUserCreate = async (props: OnUserCreateEvent) => {
     try {
-      await createUser({organizationSlug: organization.slug, values: sanitize(props.values)})
+      await createUser({
+        organizationSlug: organization.slug,
+        values: sanitize(props.values),
+      });
 
       setState({
         ...state,

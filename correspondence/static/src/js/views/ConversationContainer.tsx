@@ -3,10 +3,10 @@ import Conversation from "./Conversation";
 import UserList from "./UserList";
 import classNames from "classnames";
 import * as types from "../types";
+import { useAtomValue } from "jotai";
+import { conversationAtom } from "../atoms";
 
 type ConversationContainerProps = {
-  conversation: types.Conversation;
-  isNew: boolean;
   onSearchAdd: (user: types.User) => void;
   onSearchRemove: (user: types.User) => void;
   onAction: (action: string) => void;
@@ -16,8 +16,6 @@ type ConversationContainerProps = {
 };
 
 export default function ConversationContainer({
-  conversation,
-  isNew,
   onSearchAdd,
   onSearchRemove,
   onAction,
@@ -25,7 +23,11 @@ export default function ConversationContainer({
   onUserUpdate,
   selectedUsers,
 }: ConversationContainerProps): React.ReactElement {
+  const conversation = useAtomValue(conversationAtom);
+
   const showConversation = conversation || selectedUsers.length > 0;
+
+  const isNew = conversation && conversation.id === 0;
 
   return (
     <div className="conversation">
@@ -78,9 +80,7 @@ export default function ConversationContainer({
 
       {showConversation && (
         <Conversation
-          conversation={conversation}
           onUserUpdate={onUserUpdate}
-          isNew={isNew}
           errors={errors}
           selectedUsers={selectedUsers}
           messageFormFocus={!isNew}

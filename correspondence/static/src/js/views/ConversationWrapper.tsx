@@ -5,7 +5,8 @@ import { getConversation, markConversation, updateUser } from "../api";
 import sanitize from "../utils/sanitize";
 import { useParams } from "react-router";
 import * as types from "../types";
-import { AppContext } from "../contexts";
+import { Provider, useAtom } from "jotai";
+import { conversationAtom } from "../atoms";
 
 const usePrevious = (value: number) => {
   const ref = React.useRef(null);
@@ -15,23 +16,21 @@ const usePrevious = (value: number) => {
   return ref.current;
 };
 type State = {
-  conversation: types.Conversation | null;
-  isNew: boolean;
   selectedUsers: types.User[];
   userUpdateErrors: types.Error[];
 };
 
 export default function ConversationWrapper(): React.ReactElement {
   const initialState: State = {
-    conversation: null,
-    isNew: false,
     selectedUsers: [],
     userUpdateErrors: [],
   };
 
+  const [conversation, setConversation] = useAtom(conversationAtom);
+
   const [state, setState] = React.useState<State>(initialState);
 
-  const { isNew, conversation, selectedUsers, userUpdateErrors } = state;
+  const { selectedUsers, userUpdateErrors } = state;
 
   const onUserUpdate = async ({
     values: rawValues,
@@ -51,13 +50,8 @@ export default function ConversationWrapper(): React.ReactElement {
           country: values.country,
         },
       });
-
-      const conv = { ...conversation, ...{ receiver: user } };
-
-      setState({
-        ...state,
-        ...{ conversation: conv },
-      });
+      
+      setConversation({... conversation, ...{receiver: user}});
     } catch (e) {
       setState({
         ...state,
@@ -69,27 +63,24 @@ export default function ConversationWrapper(): React.ReactElement {
   const onConversationAction = async (action: string) => {
     const conv = await markConversation(conversation.id, action);
 
-    setState({
-      ...state,
-      ...{ conversation: conv },
-    });
+    setConversation(conv);
   };
 
   const onNewConversation = () => {
     setState({
       ...state,
-      ...{ isNew: !isNew, selectedUsers: [] },
+      ...{ selectedUsers: [] },
     });
   };
 
   const onConversationFocus = async (conversationId: number, props = {}) => {
     const conv = await getConversation(conversationId);
 
+    setConversation(conv);
+
     setState({
       ...state,
       ...{
-        conversation: conv,
-        isNew: false,
         userUpdateErrors: [],
       },
       ...props,
@@ -111,8 +102,6 @@ export default function ConversationWrapper(): React.ReactElement {
         setState({
           ...state,
           ...{
-            conversation: null,
-            isNew: true,
             userUpdateErrors: [],
             selectedUsers: newSelectedUsers,
           },
@@ -147,20 +136,11 @@ export default function ConversationWrapper(): React.ReactElement {
     }
   });
 
-  const { managers, authenticatedUser, organization, countries } =
-    React.useContext(AppContext);
-
   return (
     <div className="conversations__wrapper">
-      <ConversationList
-        onNewClick={onNewConversation}
-        conversation={conversation}
-        isNew={isNew}
-      />
+      <ConversationList onNewClick={onNewConversation} />
 
       <ConversationContainer
-        conversation={conversation}
-        isNew={isNew}
         onAction={onConversationAction}
         onUserUpdate={onUserUpdate}
         errors={userUpdateErrors}

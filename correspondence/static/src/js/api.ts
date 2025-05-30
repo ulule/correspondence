@@ -12,6 +12,7 @@ type GetConversationsQuery = {
 type GetConversationMessagesQuery = {
   conversationId: number;
   lastMessageId?: number;
+  limit: number;
 };
 
 type UpdateUserQuery = {
@@ -51,8 +52,9 @@ export async function markConversation(
 export async function getConversationMessages({
   conversationId,
   lastMessageId,
+  limit,
 }: GetConversationMessagesQuery): Promise<Page<Message>> {
-  let url = `/conversations/${conversationId}/messages/?limit=20`;
+  let url = `/conversations/${conversationId}/messages/?limit=${limit}`;
   if (lastMessageId) {
     url = `${url}&ending_before=${lastMessageId}`;
   }
@@ -70,12 +72,21 @@ export async function updateUser({
   return res.data;
 }
 
-export async function createUser({ organizationSlug, values }: CreateUserQuery): Promise<User> {
-  const res = await client.post(`/organizations/${organizationSlug}/users/`, values);
+export async function createUser({
+  organizationSlug,
+  values,
+}: CreateUserQuery): Promise<User> {
+  const res = await client.post(
+    `/organizations/${organizationSlug}/users/`,
+    values
+  );
   return res.data;
 }
 
-export async function createUserMessage({ userId, values }: CreateUserMessageQuery): Promise<Message> {
+export async function createUserMessage({
+  userId,
+  values,
+}: CreateUserMessageQuery): Promise<Message> {
   const res = await client.post(`/users/${userId}/conversation/`, values);
   return res.data;
 }

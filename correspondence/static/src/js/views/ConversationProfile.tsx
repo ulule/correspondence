@@ -4,19 +4,23 @@ import SvgActiveCampaign from "../icons/SvgActiveCampaign";
 import UserForm from "./UserForm";
 import classNames from "classnames";
 import { Error, OnUserUpdateEvent, P, User } from "../types";
+import { useAtomValue } from "jotai";
+import { userAtom } from "../atoms";
 
 type ConversationProfileProps = {
-  user: User;
   onSubmit: (ev: OnUserUpdateEvent) => void;
   errors: Error[];
+  user: User;
 };
 
 export default function ConversationProfile({
-  user,
   onSubmit,
   errors,
+  user,
 }: ConversationProfileProps): React.ReactElement {
   const [submit, setSubmit] = React.useState(false);
+
+  user = useAtomValue(userAtom) || user;
 
   const onErrors = (values: P) => {
     setSubmit(false);

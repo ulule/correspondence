@@ -1,13 +1,14 @@
 import * as React from "react";
-import { client, createUserMessage, getConversationMessages } from "../api";
+import { createUserMessage, getConversationMessages } from "../api";
 import Thread from "./Thread";
 import MessageForm from "./MessageForm";
 import * as types from "../types";
+import { useAtomValue } from "jotai";
+import { conversationAtom } from "../atoms";
 
 const DEFAULT_LIMIT = 20;
 
 type ThreadContainerProps = {
-  conversation: types.Conversation;
   selectedUsers: types.User[];
   messageFormFocus: boolean;
 };
@@ -21,7 +22,6 @@ type State = {
 };
 
 export default function ThreadContainer({
-  conversation,
   messageFormFocus,
   selectedUsers,
 }: ThreadContainerProps): React.ReactElement {
@@ -32,6 +32,8 @@ export default function ThreadContainer({
     finished: false,
     meta: { count: 0, next: null, total: 0 },
   };
+
+  const conversation = useAtomValue(conversationAtom);
 
   const [messages, setMessages] = React.useState<State>(initialState);
 
@@ -48,6 +50,7 @@ export default function ThreadContainer({
         (async () => {
           const page = await getConversationMessages({
             conversationId: conversation.id,
+            limit: DEFAULT_LIMIT,
           });
 
           setMessages({
@@ -73,6 +76,7 @@ export default function ThreadContainer({
     const page = await getConversationMessages({
       conversationId: conversation.id,
       lastMessageId: last.id,
+      limit: DEFAULT_LIMIT,
     });
 
     const latestResults = (page.data as types.Message[]).filter(
