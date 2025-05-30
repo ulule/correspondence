@@ -149,7 +149,7 @@ export default function UserList({}: UserListProps): React.ReactElement {
           </div>
         </div>
       </div>
-      {users.length > 0 && (
+      {users && (
         <div className="dropdown is-active">
           <div className="dropdown-menu" id="dropdown-menu" role="menu">
             <div className="dropdown-content">
