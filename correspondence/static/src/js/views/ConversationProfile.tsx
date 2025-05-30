@@ -3,9 +3,9 @@ import Avatar from "../components/Avatar";
 import SvgActiveCampaign from "../icons/SvgActiveCampaign";
 import UserForm from "./UserForm";
 import classNames from "classnames";
-import { OnUserUpdateEvent, P, User } from "../types";
-import { useAtomValue, useSetAtom } from "jotai";
-import { submitUserForm, userAtom, userFormSubmmitting } from "../atoms";
+import { User } from "../types";
+import { useAtomValue } from "jotai";
+import { userAtom, userFormSubmmitting } from "../atoms";
 
 type ConversationProfileProps = {
   user: User;

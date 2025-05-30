@@ -1,6 +1,5 @@
 import * as React from "react";
 import classNames from "classnames";
-import { OnUserCreateEvent } from "../types";
 
 type ModalChildProps = {};
 

@@ -47,20 +47,10 @@ export type Conversation = {
 
 export type Values = Record<string, any>;
 
-export type OnUserCreateEvent = {
-  values: Values;
-  onSuccess?: () => void;
-};
-
-export type OnUserUpdateEvent = {
-  values: Values;
-  onSuccess?: () => void;
-};
-
 export type Page<T> = {
-  meta: PageMeta
-  data: T[]
-}
+  meta: PageMeta;
+  data: T[];
+};
 
 export type PageMeta = {
   count: number;

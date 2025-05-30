@@ -2,7 +2,6 @@ import * as React from "react";
 
 import ConversationProfile from "./ConversationProfile";
 import ThreadContainer from "./ThreadContainer";
-import * as types from "../types";
 import { useAtomValue } from "jotai";
 import { conversationAtom } from "../atoms";
 

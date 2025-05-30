@@ -44,7 +44,7 @@ const UserForm = ({
 
   const { managers, countries, organization } = React.useContext(AppContext);
 
-  const [formErrors, setFormErrors] = React.useState<Record<string, any>>();
+  const [formErrors, setFormErrors] = React.useState<types.Values>();
 
   const setUserFormSubmitting = useSetAtom(userFormSubmmitting);
 
@@ -101,7 +101,7 @@ const UserForm = ({
           setFormErrors({});
 
           if (isNew && onUserCreate) {
-            onUserCreate(user)
+            onUserCreate(user);
           }
         } catch (e) {
           const rawErrors = e.response.data?.detail as types.Error[];
