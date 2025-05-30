@@ -17,6 +17,15 @@ export type User = {
   manager: User | null;
 };
 
+export type ListState<T> = {
+  data: T[];
+  initial?: boolean;
+  loading: boolean;
+  finished?: boolean;
+  meta: PageMeta;
+  params?: Values;
+};
+
 export type Organization = {
   id: number;
   name: string;

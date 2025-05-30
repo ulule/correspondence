@@ -11,7 +11,7 @@ type ThreadProps = {
 
 type MessagePage = {
   data: types.Message[];
-  initial: boolean;
+  initial?: boolean;
 };
 
 export default function Thread({

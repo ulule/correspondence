@@ -2,21 +2,16 @@ import * as React from "react";
 import classNames from "classnames";
 import Avatar from "../components/Avatar";
 import { getConversation, getUsers } from "../api";
-import { PageMeta, User } from "../types";
+import { ListState, User } from "../types";
 import { useAtom, useSetAtom } from "jotai";
 import { conversationAtom, selectedUsersAtom } from "../atoms";
 
-type State = {
-  data: User[];
-  loading: boolean;
-  search: string;
-  meta: PageMeta;
-};
-
-const usersInitialState: State = {
+const usersInitialState: ListState<User> = {
   data: [],
   loading: false,
-  search: "",
+  params: {
+    search: "",
+  },
   meta: { count: 0, next: null, total: 0 },
 };
 
@@ -29,9 +24,9 @@ type TypingState = {
 
 export default function UserList({}: UserListProps): React.ReactElement {
   const [typing, setTyping] = React.useState<TypingState>({ typing: false });
-  const [state, setState] = React.useState<State>(usersInitialState);
+  const [state, setState] = React.useState<ListState<User>>(usersInitialState);
   const [selectedUsers, setSelectedUsers] = useAtom(selectedUsersAtom);
-  const setConversation = useSetAtom(conversationAtom)
+  const setConversation = useSetAtom(conversationAtom);
 
   const handleUserAdd = (user: User) => {
     setState(usersInitialState);
@@ -45,7 +40,9 @@ export default function UserList({}: UserListProps): React.ReactElement {
       setState({
         data: [],
         loading: false,
-        search: "",
+        params: {
+          search: ""
+        },
         meta: { count: 0, next: null, total: 0 },
       });
 
@@ -59,7 +56,9 @@ export default function UserList({}: UserListProps): React.ReactElement {
 
       setState({
         data: page.data,
-        search: name,
+        params: {
+          search: name,
+        },
         loading: false,
         meta: page.meta,
       });
@@ -85,7 +84,7 @@ export default function UserList({}: UserListProps): React.ReactElement {
     });
   };
 
-  const { loading, data: users, search: searchTerm } = state;
+  const { loading, data: users, params } = state;
 
   const onUserAdd = async (user: User) => {
     const index = (selectedUsers ?? []).findIndex((cur) => cur.id === user.id);
@@ -94,8 +93,8 @@ export default function UserList({}: UserListProps): React.ReactElement {
       const newSelectedUsers = [...(selectedUsers ?? []), user];
 
       if (newSelectedUsers.length === 1) {
-        const conversation = await getConversation(newSelectedUsers[0].id)
-        setConversation(conversation)
+        const conversation = await getConversation(newSelectedUsers[0].id);
+        setConversation(conversation);
       }
 
       setSelectedUsers(newSelectedUsers);
@@ -140,7 +139,7 @@ export default function UserList({}: UserListProps): React.ReactElement {
                     className="input"
                     type="text"
                     placeholder="Enter a name or a number"
-                    defaultValue={searchTerm}
+                    defaultValue={params.search ?? ""}
                     onChange={handleChange}
                     ref={searchInputRef}
                   />

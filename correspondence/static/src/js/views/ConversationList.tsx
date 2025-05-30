@@ -2,32 +2,24 @@ import * as React from "react";
 import ConversationItem from "./ConversationItem";
 import classNames from "classnames";
 import { getConversations } from "../api";
-import { Conversation, PageMeta } from "../types";
+import { Conversation, PageMeta, ListState } from "../types";
 import { AppContext } from "../contexts";
 import { useAtomValue, useAtom } from "jotai";
 import { conversationAtom, isNewConversation } from "../atoms";
 
 type ConversationListProps = {};
 
-type State = {
-  data: Conversation[];
-  managerId: number | null;
-  loading: boolean;
-  initial: boolean;
-  meta: PageMeta;
-};
-
 export default function ConversationList({}: ConversationListProps): React.ReactElement {
-  const initialState: State = {
+  const initialState: ListState<Conversation> = {
     data: [],
-    managerId: null,
     loading: true,
     initial: true,
     meta: { count: 0, next: null, total: 0, offset: 0 },
   };
   const [isNew, setIsNewConversation] = useAtom(isNewConversation);
 
-  const [conversations, setConversations] = React.useState<State>(initialState);
+  const [conversations, setConversations] =
+    React.useState<ListState<Conversation>>(initialState);
 
   const { authenticatedUser, organization } = React.useContext(AppContext);
 
@@ -39,7 +31,7 @@ export default function ConversationList({}: ConversationListProps): React.React
       onClick: () => {
         loadConversations({});
       },
-      isActive: !conversations.managerId,
+      isActive: !conversations.params?.managerId,
       key: "all-conversations",
     },
     {
@@ -47,7 +39,7 @@ export default function ConversationList({}: ConversationListProps): React.React
       onClick: () => {
         loadConversations({ managerId: authenticatedUser.id });
       },
-      isActive: conversations.managerId,
+      isActive: conversations.params?.managerId,
       key: "my-conversations",
     },
   ];
@@ -63,13 +55,13 @@ export default function ConversationList({}: ConversationListProps): React.React
 
     const page = await getConversations({
       organizationSlug: organization.slug,
-      managerId: conversations.managerId,
+      managerId: conversations.params?.managerId,
       offset: offset,
     });
 
     setConversations({
       data: [...conversations.data, ...page.data],
-      managerId: conversations.managerId,
+      params: conversations.params,
       meta: page.meta,
       loading: false,
       initial: false,
@@ -97,7 +89,9 @@ export default function ConversationList({}: ConversationListProps): React.React
 
     setConversations({
       data: page.data,
-      managerId: managerId,
+      params: {
+        managerId: managerId,
+      },
       meta: page.meta,
       loading: false,
       initial: false,

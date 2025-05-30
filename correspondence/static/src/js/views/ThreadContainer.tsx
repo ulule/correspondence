@@ -12,18 +12,10 @@ type ThreadContainerProps = {
   messageFormFocus: boolean;
 };
 
-type State = {
-  data: types.Message[];
-  initial: boolean;
-  loading: boolean;
-  finished: boolean;
-  meta: types.PageMeta;
-};
-
 export default function ThreadContainer({
   messageFormFocus,
 }: ThreadContainerProps): React.ReactElement {
-  const initialState: State = {
+  const initialState: types.ListState<types.Message> = {
     data: [],
     initial: true,
     loading: false,
@@ -34,7 +26,7 @@ export default function ThreadContainer({
   const conversation = useAtomValue(conversationAtom);
   const selectedUsers = useAtomValue(selectedUsersAtom)
 
-  const [messages, setMessages] = React.useState<State>(initialState);
+  const [messages, setMessages] = React.useState<types.ListState<types.Message>>(initialState);
 
   React.useEffect(() => {
     if (conversation && conversation.id) {
