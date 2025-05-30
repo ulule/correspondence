@@ -9,6 +9,7 @@ import { conversationAtom } from "../atoms";
 
 type ConversationListProps = {
   onNewClick: () => void;
+  isNew: boolean
 };
 
 type State = {
@@ -21,6 +22,7 @@ type State = {
 
 export default function ConversationList({
   onNewClick,
+  isNew,
 }: ConversationListProps): React.ReactElement {
   const initialState: State = {
     data: [],
@@ -34,8 +36,6 @@ export default function ConversationList({
   const { authenticatedUser, organization } = React.useContext(AppContext);
 
   const conversation = useAtomValue(conversationAtom);
-
-  const isNew = conversation && conversation.id === 0;
 
   const filters = [
     {

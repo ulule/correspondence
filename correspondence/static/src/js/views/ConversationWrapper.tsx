@@ -1,6 +1,7 @@
 import * as React from "react";
 import ConversationList from "./ConversationList";
 import ConversationContainer from "./ConversationContainer";
+import UserCreate from "./UserCreate";
 import { getConversation, markConversation, updateUser } from "../api";
 import { useParams } from "react-router";
 import * as types from "../types";
@@ -15,11 +16,13 @@ const usePrevious = (value: number) => {
   return ref.current;
 };
 type State = {
+  isNew: boolean;
   selectedUsers: types.User[];
 };
 
 export default function ConversationWrapper(): React.ReactElement {
   const initialState: State = {
+    isNew: false,
     selectedUsers: [],
   };
 
@@ -27,7 +30,7 @@ export default function ConversationWrapper(): React.ReactElement {
 
   const [state, setState] = React.useState<State>(initialState);
 
-  const { selectedUsers } = state;
+  const { selectedUsers, isNew } = state;
 
   const onConversationAction = async (action: string) => {
     const conv = await markConversation(conversation.id, action);
@@ -38,7 +41,7 @@ export default function ConversationWrapper(): React.ReactElement {
   const onNewConversation = () => {
     setState({
       ...state,
-      ...{ selectedUsers: [] },
+      ...{ selectedUsers: [], isNew: !isNew },
     });
   };
 
@@ -69,6 +72,7 @@ export default function ConversationWrapper(): React.ReactElement {
       } else {
         setState({
           selectedUsers: newSelectedUsers,
+          isNew: false,
         });
       }
     }
@@ -101,15 +105,20 @@ export default function ConversationWrapper(): React.ReactElement {
   });
 
   return (
-    <div className="conversations__wrapper">
-      <ConversationList onNewClick={onNewConversation} />
+    <>
+      <UserCreate />
 
-      <ConversationContainer
-        onAction={onConversationAction}
-        selectedUsers={selectedUsers}
-        onSearchAdd={onUserAdd}
-        onSearchRemove={onUserRemove}
-      />
-    </div>
+      <div className="conversations__wrapper">
+        <ConversationList onNewClick={onNewConversation} isNew={isNew} />
+
+        <ConversationContainer
+          onAction={onConversationAction}
+          selectedUsers={selectedUsers}
+          onSearchAdd={onUserAdd}
+          onSearchRemove={onUserRemove}
+          isNew={isNew}
+        />
+      </div>
+    </>
   );
 }

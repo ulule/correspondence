@@ -7,6 +7,7 @@ import sanitize from "../utils/sanitize";
 import { updateUser, createUser } from "../api";
 import { useSetAtom } from "jotai";
 import { userAtom, userFormSubmmitting } from "../atoms";
+import { useNavigate } from "react-router";
 
 function filterNulls(obj: types.P): types.FormData {
   const newObj = { ...obj };
@@ -50,6 +51,8 @@ const UserForm = ({
 
   const setUser = useSetAtom(userAtom);
 
+  const navigate = useNavigate();
+
   React.useEffect(() => {
     if (submit) {
       formSubmit();
@@ -69,6 +72,7 @@ const UserForm = ({
 
         try {
           setUserFormSubmitting(true);
+          let isNew = false;
 
           if (user) {
             const updatedUser = await updateUser({
@@ -86,14 +90,22 @@ const UserForm = ({
 
             setUser(updatedUser);
           } else {
-            await createUser({
+            user = await createUser({
               organizationSlug: organization.slug,
               values: sanitize(values),
             });
+
+            isNew = true;
           }
 
           setUserFormSubmitting(false);
           setFormErrors({});
+
+          if (isNew) {
+            navigate(
+              `/organizations/${organization.slug}/conversations/${user.id}/`
+            );
+          }
         } catch (e) {
           const rawErrors = e.response.data?.detail as types.Error[];
 

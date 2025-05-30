@@ -8,13 +8,10 @@ import ConversationWrapper from "./views/ConversationWrapper";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Countries, Organization, User } from "./types";
 import { AppContext } from "./contexts";
-import UserCreate from "./views/UserCreate";
 
 function Conversations(): React.ReactElement {
   return (
     <div className="conversations">
-      <UserCreate />
-
       <BrowserRouter>
         <Routes>
           <Route

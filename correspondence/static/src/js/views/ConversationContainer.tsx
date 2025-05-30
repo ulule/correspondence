@@ -11,6 +11,7 @@ type ConversationContainerProps = {
   onSearchRemove: (user: types.User) => void;
   onAction: (action: string) => void;
   selectedUsers: types.User[];
+  isNew: boolean;
 };
 
 export default function ConversationContainer({
@@ -18,12 +19,11 @@ export default function ConversationContainer({
   onSearchRemove,
   onAction,
   selectedUsers,
+  isNew,
 }: ConversationContainerProps): React.ReactElement {
   const conversation = useAtomValue(conversationAtom);
 
   const showConversation = conversation || selectedUsers.length > 0;
-
-  const isNew = conversation && conversation.id === 0;
 
   return (
     <div className="conversation">
@@ -75,10 +75,7 @@ export default function ConversationContainer({
       </div>
 
       {showConversation && (
-        <Conversation
-          selectedUsers={selectedUsers}
-          messageFormFocus={!isNew}
-        />
+        <Conversation selectedUsers={selectedUsers} messageFormFocus={!isNew} />
       )}
     </div>
   );
