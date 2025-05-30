@@ -3,6 +3,8 @@ import classNames from "classnames";
 import Avatar from "../components/Avatar";
 import { client } from "../api";
 import { PageMeta, User } from "../types";
+import { useAtomValue } from "jotai";
+import { selectedUsersAtom } from "../atoms";
 
 type State = {
   data: User[];
@@ -21,7 +23,6 @@ const usersInitialState: State = {
 type UserListProps = {
   onUserAdd: (user: User) => void;
   onUserRemove: (user: User) => void;
-  selectedUsers: User[];
 };
 
 type TypingState = {
@@ -32,10 +33,10 @@ type TypingState = {
 export default function UserList({
   onUserAdd,
   onUserRemove,
-  selectedUsers,
 }: UserListProps): React.ReactElement {
   const [typing, setTyping] = React.useState<TypingState>({ typing: false });
   const [users, setUsers] = React.useState<State>(usersInitialState);
+  const selectedUsers = useAtomValue(selectedUsersAtom);
 
   const handleUserAdd = (user: User) => {
     setUsers(usersInitialState);

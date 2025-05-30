@@ -7,27 +7,22 @@ import { useAtomValue } from "jotai";
 import { conversationAtom } from "../atoms";
 
 type ConversationProps = {
-  selectedUsers: types.User[];
   messageFormFocus: boolean;
 };
 
 export default function Conversation({
-  selectedUsers,
   messageFormFocus,
 }: ConversationProps): React.ReactElement {
   const conversation = useAtomValue(conversationAtom);
-
-  const isNew = conversation && conversation.id === 0
 
   return (
     <div className="conversation__container">
       <div className="conversation__wrapper">
         <ThreadContainer
           messageFormFocus={messageFormFocus}
-          selectedUsers={selectedUsers}
         />
       </div>
-      {!isNew && (
+      {conversation && conversation.receiver && (
         <ConversationProfile
           user={conversation.receiver}
         />

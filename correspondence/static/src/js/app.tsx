@@ -8,22 +8,25 @@ import ConversationWrapper from "./views/ConversationWrapper";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Countries, Organization, User } from "./types";
 import { AppContext } from "./contexts";
+import UserCreate from "./views/UserCreate";
 
 function Conversations(): React.ReactElement {
   return (
     <div className="conversations">
-      <BrowserRouter>
-        <Routes>
-          <Route
-            path="/organizations/:slug/conversations?"
-            element={<ConversationWrapper />}
-          />
-          <Route
-            path="/organizations/:slug/conversations/:id"
-            element={<ConversationWrapper />}
-          />
-        </Routes>
-      </BrowserRouter>
+      <div className="conversations__wrapper">
+        <BrowserRouter>
+          <Routes>
+            <Route
+              path="/organizations/:slug/conversations?"
+              element={<ConversationWrapper />}
+            />
+            <Route
+              path="/organizations/:slug/conversations/:id"
+              element={<ConversationWrapper />}
+            />
+          </Routes>
+        </BrowserRouter>
+      </div>
     </div>
   );
 }
@@ -64,6 +67,7 @@ window.addEventListener("DOMContentLoaded", () => {
           managers: managers,
         }}
       >
+        <UserCreate />
         <Conversations />
       </AppContext>
     );

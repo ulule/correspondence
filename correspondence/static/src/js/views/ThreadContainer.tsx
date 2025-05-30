@@ -4,12 +4,11 @@ import Thread from "./Thread";
 import MessageForm from "./MessageForm";
 import * as types from "../types";
 import { useAtomValue } from "jotai";
-import { conversationAtom } from "../atoms";
+import { conversationAtom, selectedUsersAtom } from "../atoms";
 
 const DEFAULT_LIMIT = 20;
 
 type ThreadContainerProps = {
-  selectedUsers: types.User[];
   messageFormFocus: boolean;
 };
 
@@ -23,7 +22,6 @@ type State = {
 
 export default function ThreadContainer({
   messageFormFocus,
-  selectedUsers,
 }: ThreadContainerProps): React.ReactElement {
   const initialState: State = {
     data: [],
@@ -34,6 +32,7 @@ export default function ThreadContainer({
   };
 
   const conversation = useAtomValue(conversationAtom);
+  const selectedUsers = useAtomValue(selectedUsersAtom)
 
   const [messages, setMessages] = React.useState<State>(initialState);
 
