@@ -49,6 +49,11 @@ export async function markConversation(
   return res.data;
 }
 
+export async function getManagers(): Promise<User[]> {
+  const res = await client.get(`/users/?is_staff=1`);
+  return res.data.data;
+}
+
 export async function getConversationMessages({
   conversationId,
   lastMessageId,

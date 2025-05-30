@@ -2,42 +2,25 @@ import * as React from "react";
 import classNames from "classnames";
 import { OnUserCreateEvent } from "../types";
 
-type ModalChildProps = {
-  onSubmit: (props: OnUserCreateEvent) => void
-  submit: boolean
-  onErrors: () => void
-}
+type ModalChildProps = {};
 
 type ModalProps = {
   visible: boolean;
   onCloseClick: () => void;
   title: string;
-  onSave: (props: OnUserCreateEvent) => void | Promise<void>;
+  loading?: boolean;
+  onSaveClick: () => void;
   children: React.ReactElement<ModalChildProps>;
 };
 
 export default function Modal({
   visible,
   onCloseClick,
+  loading,
   title,
-  onSave,
+  onSaveClick,
   children,
 }: ModalProps): React.ReactElement {
-  const [submit, setSubmit] = React.useState(false);
-
-  const onSubmit = ({ onSuccess, ...props }: OnUserCreateEvent) => {
-    onSave({
-      ...props,
-      onSuccess: () => {
-        setSubmit(false);
-
-        if (onSuccess) {
-          onSuccess();
-        }
-      },
-    });
-  };
-
   React.useEffect(() => {
     const handleKeydown = (evt: KeyboardEvent) => {
       // handle ESC key
@@ -52,10 +35,6 @@ export default function Modal({
       document.removeEventListener("keydown", handleKeydown, false);
     };
   });
-
-  const onErrors = () => {
-    setSubmit(false);
-  };
 
   return (
     <div
@@ -75,18 +54,19 @@ export default function Modal({
           ></button>
         </header>
         <section className="modal-card-body">
-          {React.cloneElement(children as React.ReactElement<ModalChildProps>, { onSubmit, submit, onErrors })}
+          {React.cloneElement(
+            children as React.ReactElement<ModalChildProps>,
+            {}
+          )}
         </section>
         <footer className="modal-card-foot">
           <button
             className={classNames({
               button: true,
               "is-success": true,
-              "is-loading": submit,
+              "is-loading": !!loading,
             })}
-            onClick={() => {
-              setSubmit(true);
-            }}
+            onClick={onSaveClick}
           >
             Save changes
           </button>

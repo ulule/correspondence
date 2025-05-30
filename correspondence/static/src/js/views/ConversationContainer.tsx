@@ -10,8 +10,6 @@ type ConversationContainerProps = {
   onSearchAdd: (user: types.User) => void;
   onSearchRemove: (user: types.User) => void;
   onAction: (action: string) => void;
-  errors: types.Error[];
-  onUserUpdate: (ev: types.OnUserUpdateEvent) => void;
   selectedUsers: types.User[];
 };
 
@@ -19,8 +17,6 @@ export default function ConversationContainer({
   onSearchAdd,
   onSearchRemove,
   onAction,
-  errors,
-  onUserUpdate,
   selectedUsers,
 }: ConversationContainerProps): React.ReactElement {
   const conversation = useAtomValue(conversationAtom);
@@ -80,8 +76,6 @@ export default function ConversationContainer({
 
       {showConversation && (
         <Conversation
-          onUserUpdate={onUserUpdate}
-          errors={errors}
           selectedUsers={selectedUsers}
           messageFormFocus={!isNew}
         />

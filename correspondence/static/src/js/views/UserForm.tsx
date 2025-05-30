@@ -1,9 +1,12 @@
 import * as React from "react";
 import * as Yup from "yup";
-import { Formik, FormikState } from "formik";
-import withFormikValidator from "../hoc/withFormikValidator";
+import { Formik } from "formik";
 import * as types from "../types";
 import { AppContext } from "../contexts";
+import sanitize from "../utils/sanitize";
+import { updateUser, createUser } from "../api";
+import { useSetAtom } from "jotai";
+import { userAtom, userFormSubmmitting } from "../atoms";
 
 function filterNulls(obj: types.P): types.FormData {
   const newObj = { ...obj };
@@ -26,35 +29,32 @@ const UserSchema = Yup.object().shape({
 
 type UserFormProps = {
   user?: types.User;
-  onSubmit?: (ev: types.OnUserUpdateEvent) => void;
-  submit?: boolean;
-  onErrors?: (values: types.P) => void;
-  formErrors?: types.P;
+  submit: boolean;
+  onSubmit: () => void;
 };
 
 const UserForm = ({
-  onSubmit,
-  onErrors,
-  submit,
-  formErrors,
   user,
+  submit,
+  onSubmit,
 }: UserFormProps): React.ReactElement => {
+  const userData = filterNulls(user);
+
+  const { managers, countries, organization } = React.useContext(AppContext);
+
+  const [formErrors, setFormErrors] = React.useState<Record<string, any>>();
+
+  const setUserFormSubmitting = useSetAtom(userFormSubmmitting);
+
   let formSubmit: () => Promise<void>;
-  let formReset: (nextState?: Partial<FormikState<{ body: string }>>) => void;
+
+  const setUser = useSetAtom(userAtom);
 
   React.useEffect(() => {
     if (submit) {
-      formSubmit().then(() => {
-        if (formErrors) {
-          onErrors(formErrors);
-        }
-      });
+      formSubmit();
     }
   }, [submit]);
-
-  const userData = filterNulls(user);
-
-  const { managers, countries } = React.useContext(AppContext);
 
   return (
     <Formik
@@ -63,14 +63,50 @@ const UserForm = ({
       enableReinitialize={true}
       validateOnChange={false}
       validateOnBlur={false}
-      onSubmit={(values, { setSubmitting }) => {
-        onSubmit({
-          values: values,
-          onSuccess: () => {
-            Object.keys(values).forEach((key) => (values[key] = ""));
-            formReset(values);
-          },
-        });
+      onSubmit={async (rawValues, { setSubmitting }) => {
+        onSubmit();
+        const values = sanitize(rawValues);
+
+        try {
+          setUserFormSubmitting(true);
+
+          if (user) {
+            const updatedUser = await updateUser({
+              userId: user.id,
+              values: {
+                first_name: values.first_name,
+                last_name: values.last_name,
+                active_campaign_id: values.active_campaign_id,
+                email: values.email,
+                phone_number: values.phone_number,
+                manager_id: values.manager_id,
+                country: values.country,
+              },
+            });
+
+            setUser(updatedUser);
+          } else {
+            await createUser({
+              organizationSlug: organization.slug,
+              values: sanitize(values),
+            });
+          }
+
+          setUserFormSubmitting(false);
+          setFormErrors({});
+        } catch (e) {
+          const rawErrors = e.response.data?.detail as types.Error[];
+
+          const results = rawErrors.reduce((accumulator, field) => {
+            return {
+              ...accumulator,
+              [field.loc[field.loc.length - 1]]: field.msg,
+            };
+          }, {});
+
+          setUserFormSubmitting(false);
+          setFormErrors(results);
+        }
       }}
     >
       {({
@@ -85,8 +121,6 @@ const UserForm = ({
         resetForm,
       }) => {
         formSubmit = submitForm;
-        formReset = resetForm;
-
         return (
           <div className="user__form">
             <form onSubmit={handleSubmit}>
@@ -113,7 +147,7 @@ const UserForm = ({
                     {errors.manager_id && (
                       <p className="help is-danger">{errors.manager_id}</p>
                     )}
-                    {formErrors.manager_id && (
+                    {formErrors && formErrors.manager_id && (
                       <p className="help is-danger">{formErrors.manager_id}</p>
                     )}
                   </div>
@@ -139,7 +173,7 @@ const UserForm = ({
                     {errors.country && (
                       <p className="help is-danger">{errors.country}</p>
                     )}
-                    {formErrors.country && (
+                    {formErrors && formErrors.country && (
                       <p className="help is-danger">{formErrors.country}</p>
                     )}
                   </div>
@@ -162,7 +196,7 @@ const UserForm = ({
                   {errors.email && (
                     <p className="help is-danger">{errors.email}</p>
                   )}
-                  {formErrors.email && (
+                  {formErrors && formErrors.email && (
                     <p className="help is-danger">{formErrors.email}</p>
                   )}
                 </p>
@@ -223,7 +257,7 @@ const UserForm = ({
                   {errors.phone_number && (
                     <p className="help is-danger">{errors.phone_number}</p>
                   )}
-                  {formErrors.phone_number && (
+                  {formErrors && formErrors.phone_number && (
                     <p className="help is-danger">{formErrors.phone_number}</p>
                   )}
                 </p>
@@ -247,7 +281,7 @@ const UserForm = ({
                       {errors.active_campaign_id}
                     </p>
                   )}
-                  {formErrors.active_campaign_id && (
+                  {formErrors && formErrors.active_campaign_id && (
                     <p className="help is-danger">
                       {formErrors.active_campaign_id}
                     </p>
@@ -262,4 +296,4 @@ const UserForm = ({
   );
 };
 
-export default withFormikValidator<UserFormProps, types.Error[]>(UserForm);
+export default UserForm;

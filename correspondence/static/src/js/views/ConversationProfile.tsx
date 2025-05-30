@@ -3,28 +3,21 @@ import Avatar from "../components/Avatar";
 import SvgActiveCampaign from "../icons/SvgActiveCampaign";
 import UserForm from "./UserForm";
 import classNames from "classnames";
-import { Error, OnUserUpdateEvent, P, User } from "../types";
-import { useAtomValue } from "jotai";
-import { userAtom } from "../atoms";
+import { OnUserUpdateEvent, P, User } from "../types";
+import { useAtomValue, useSetAtom } from "jotai";
+import { submitUserForm, userAtom, userFormSubmmitting } from "../atoms";
 
 type ConversationProfileProps = {
-  onSubmit: (ev: OnUserUpdateEvent) => void;
-  errors: Error[];
   user: User;
 };
 
 export default function ConversationProfile({
-  onSubmit,
-  errors,
   user,
 }: ConversationProfileProps): React.ReactElement {
+  const submitting = useAtomValue(userFormSubmmitting);
   const [submit, setSubmit] = React.useState(false);
 
   user = useAtomValue(userAtom) || user;
-
-  const onErrors = (values: P) => {
-    setSubmit(false);
-  };
 
   return (
     <div className="conversation__profile">
@@ -41,10 +34,8 @@ export default function ConversationProfile({
           <div className="conversation__profile__identity">
             <UserForm
               user={user}
-              onSubmit={onSubmit}
               submit={submit}
-              onErrors={onErrors}
-              errors={errors}
+              onSubmit={() => setSubmit(false)}
             />
 
             <div className="field is-grouped conversation__profile__buttons">
@@ -53,7 +44,7 @@ export default function ConversationProfile({
                   className={classNames({
                     button: true,
                     "is-success": true,
-                    "is-loading": submit,
+                    "is-loading": submitting,
                   })}
                   onClick={() => {
                     setSubmit(true);

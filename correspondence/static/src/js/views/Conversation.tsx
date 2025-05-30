@@ -7,15 +7,11 @@ import { useAtomValue } from "jotai";
 import { conversationAtom } from "../atoms";
 
 type ConversationProps = {
-  onUserUpdate: (ev: types.OnUserUpdateEvent) => void;
-  errors: types.Error[];
   selectedUsers: types.User[];
   messageFormFocus: boolean;
 };
 
 export default function Conversation({
-  onUserUpdate,
-  errors,
   selectedUsers,
   messageFormFocus,
 }: ConversationProps): React.ReactElement {
@@ -34,8 +30,6 @@ export default function Conversation({
       {!isNew && (
         <ConversationProfile
           user={conversation.receiver}
-          errors={errors}
-          onSubmit={onUserUpdate}
         />
       )}
     </div>

@@ -9,3 +9,7 @@ export const selectedUsersAtom = atom<User[] | null>();
 export const userAtom = atom<User | null>();
 
 export const messagesAtom = atom<Message[] | null>();
+
+export const userFormSubmmitting = atom<boolean>(false);
+
+export const submitUserForm = atom<boolean>(false);
