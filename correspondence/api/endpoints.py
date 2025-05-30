@@ -117,6 +117,7 @@ async def user_conversation_detail(
     if not conversation:
         conversation = Conversation(
             receiver=user,
+            receiver_id=user.id,
             unread=False,
             created_at=utc_now(),
             messages_count=0,
