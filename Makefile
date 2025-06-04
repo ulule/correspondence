@@ -19,7 +19,7 @@ check:
 safe: fmt lint check
 
 shell:
-	uv run ipython
+	uv run python -m correspondence.cli shell
 
 fmt:
 	uv run ruff format correspondence/ tests/
