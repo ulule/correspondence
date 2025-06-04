@@ -1,12 +1,10 @@
 from datetime import datetime
-from typing import Any, Self, TypeVar
+from typing import Any, Self
 
 from pydantic import BaseModel
 from typing_extensions import Optional
 
 from correspondence import models
-
-T = TypeVar("T", bound=Any)
 
 
 class Resource(BaseModel):
