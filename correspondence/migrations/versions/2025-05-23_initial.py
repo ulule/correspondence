@@ -61,6 +61,13 @@ def upgrade() -> None:
             sqlalchemy_utils.types.country.CountryType(length=2),
             nullable=True,
         ),
+        sa.Column(
+            "search_vector",
+            sqlalchemy_utils.types.TSVectorType(
+                "first_name", "last_name", "email", "phone_number"
+            ),
+            nullable=True,
+        ),
         sa.PrimaryKeyConstraint("id", name=op.f("correspondence_user_pkey")),
     )
 

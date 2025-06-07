@@ -11,7 +11,8 @@ from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import (Mapped, Session, joinedload, mapped_column,
                             relationship, selectinload)
-from sqlalchemy_utils import Country, CountryType
+from sqlalchemy_searchable import search
+from sqlalchemy_utils import Country, CountryType, TSVectorType
 
 from correspondence.db.models import Model
 from correspondence.db.sql import select
@@ -63,6 +64,10 @@ class User(Model):
 
     organization: Mapped["Optional[Organization]"] = relationship(
         foreign_keys=[organization_id], viewonly=True, lazy="raise"
+    )
+
+    search_vector: Mapped[TSVectorType] = mapped_column(
+        TSVectorType("first_name", "last_name", "email", "phone_number"), nullable=True
     )
 
     @property
@@ -171,6 +176,9 @@ class User(Model):
         query = select(User).order_by(User.created_at.desc(), User.id.desc())
         if pagination.is_staff:
             query = query.filter(User.is_staff.is_(True))
+
+        if pagination.q:
+            query = search(query, pagination.q)
 
         return await paginate(asession, User.id, query, pagination)
 

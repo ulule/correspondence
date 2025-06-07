@@ -10,7 +10,7 @@ dependencies = [
     "psycopg>=3.2.9",
     "sqlalchemy>=2.0.41",
     "taskiq>=0.11.17",
-    "taskiq-redis>=1.0.8",
+    "taskiq-redis>=1.0.9",
     "typer>=0.16.0",
     "uvicorn>=0.34.3",
     "cacheout>=0.16.0",
@@ -26,8 +26,8 @@ dependencies = [
     "types-redis>=4.6.0.20241004",
     "greenlet>=3.2.2",
     "asgi-correlation-id>=4.3.4",
-    "ddtrace>=3.8.1",
-    "sqlalchemy-searchable>=2.1.0",
+    "ddtrace>=3.9.1",
+    "sqlalchemy-searchable",
     "pydantic-extra-types>=2.10.4",
     "pycountry>=24.6.1",
     "phonenumbers>=9.0.6",
@@ -46,11 +46,14 @@ dev-dependencies = [
     "ipdb>=0.13.13",
     "isort>=6.0.1",
     "mypy>=1.16.0",
-    "pytest>=8.3.5",
+    "pytest>=8.4.0",
     "pytest-asyncio>=1.0.0",
     "ruff>=0.11.12",
 ]
 
 [[tool.mypy.overrides]]
-module = ["sqlalchemy_utils.*", "cacheout.*"]
+module = ["sqlalchemy_utils.*", "cacheout.*", "sqlalchemy_searchable"]
 follow_untyped_imports = true
+
+[tool.uv.sources]
+sqlalchemy-searchable = { git = "https://github.com/ulule/sqlalchemy-searchable.git", rev = "083738ef5ce457c24a99899fd801457c61ac7889" }

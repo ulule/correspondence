@@ -4,6 +4,7 @@ from typing import TypeVar
 from sqlalchemy import INTEGER, TIMESTAMP, MetaData
 from sqlalchemy.ext.asyncio import AsyncAttrs
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+from sqlalchemy_searchable import make_searchable
 from sqlalchemy_utils import force_auto_coercion, force_instant_defaults
 
 from correspondence.utils import utc_now
@@ -22,6 +23,8 @@ my_metadata = MetaData(
         "pk": "%(table_name)s_pkey",
     }
 )
+
+make_searchable(my_metadata)
 
 
 class BaseModel(DeclarativeBase):
