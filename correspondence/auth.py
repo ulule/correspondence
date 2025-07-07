@@ -47,7 +47,7 @@ def disconnect(response: Response) -> None:
 async def get_auth_state_from_cookie(cookie: str, asession: AsyncSession) -> AuthState:
     try:
         data = jwt.decode(token=cookie)
-    except jwt.DecodeError:
+    except (jwt.DecodeError, jwt.ExpiredSignatureError):
         return AuthState(
             reason="unable to decode authentication token", user=AnonymousUser()
         )
